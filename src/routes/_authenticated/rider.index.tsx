@@ -10,7 +10,7 @@ import { VehicleIcon } from "@/components/shared/OrderBits";
 import { Button } from "@/components/ui/button";
 import { riderNav } from "@/features/rider/nav";
 import { PRIORITY_LABEL, type Priority } from "@/features/priority/priority";
-import { availableOrdersQuery, riderProfileQuery, acceptOrder, saveLocation, RADII, type SortMode } from "@/features/rider/rider";
+import { availableOrdersQuery, riderProfileQuery, acceptOrder, saveLocation, registerRider, RADII, type SortMode } from "@/features/rider/rider";
 import { friendlyError } from "@/features/orders/orders";
 
 /** Labeled demo spots inside the Karachi service area — never presented as the rider's real position. */

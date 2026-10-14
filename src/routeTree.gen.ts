@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedCustomerBookRouteImport } from './routes/_authenticated/customer.book'
+import { Route as AuthenticatedRiderIndexRouteImport } from './routes/_authenticated/rider.index'
 import { Route as AuthenticatedCustomerOrdersIndexRouteImport } from './routes/_authenticated/customer.orders.index'
 import { Route as AuthenticatedCustomerOrdersOrderIdRouteImport } from './routes/_authenticated/customer.orders.$orderId'
 
@@ -49,6 +50,11 @@ const AuthenticatedCustomerBookRoute =
     path: '/customer/book',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRiderIndexRoute = AuthenticatedRiderIndexRouteImport.update({
+  id: '/rider/',
+  path: '/rider/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCustomerOrdersIndexRoute =
   AuthenticatedCustomerOrdersIndexRouteImport.update({
     id: '/customer/orders/',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
   '/customer/': typeof AuthenticatedCustomerIndexRoute
+  '/rider/': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
 }
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
   '/customer': typeof AuthenticatedCustomerIndexRoute
+  '/rider': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/customer/orders': typeof AuthenticatedCustomerOrdersIndexRoute
 }
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/customer/book': typeof AuthenticatedCustomerBookRoute
   '/_authenticated/customer/': typeof AuthenticatedCustomerIndexRoute
+  '/_authenticated/rider/': typeof AuthenticatedRiderIndexRoute
   '/_authenticated/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/_authenticated/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/customer/book'
     | '/customer/'
+    | '/rider/'
     | '/customer/orders/$orderId'
     | '/customer/orders/'
   fileRoutesByTo: FileRoutesByTo
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/customer/book'
     | '/customer'
+    | '/rider'
     | '/customer/orders/$orderId'
     | '/customer/orders'
   id:
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/customer/book'
     | '/_authenticated/customer/'
+    | '/_authenticated/rider/'
     | '/_authenticated/customer/orders/$orderId'
     | '/_authenticated/customer/orders/'
   fileRoutesById: FileRoutesById
@@ -173,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomerBookRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rider/': {
+      id: '/_authenticated/rider/'
+      path: '/rider'
+      fullPath: '/rider/'
+      preLoaderRoute: typeof AuthenticatedRiderIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/customer/orders/': {
       id: '/_authenticated/customer/orders/'
       path: '/customer/orders'
@@ -193,6 +212,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomerBookRoute: typeof AuthenticatedCustomerBookRoute
   AuthenticatedCustomerIndexRoute: typeof AuthenticatedCustomerIndexRoute
+  AuthenticatedRiderIndexRoute: typeof AuthenticatedRiderIndexRoute
   AuthenticatedCustomerOrdersOrderIdRoute: typeof AuthenticatedCustomerOrdersOrderIdRoute
   AuthenticatedCustomerOrdersIndexRoute: typeof AuthenticatedCustomerOrdersIndexRoute
 }
@@ -200,6 +220,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomerBookRoute: AuthenticatedCustomerBookRoute,
   AuthenticatedCustomerIndexRoute: AuthenticatedCustomerIndexRoute,
+  AuthenticatedRiderIndexRoute: AuthenticatedRiderIndexRoute,
   AuthenticatedCustomerOrdersOrderIdRoute:
     AuthenticatedCustomerOrdersOrderIdRoute,
   AuthenticatedCustomerOrdersIndexRoute: AuthenticatedCustomerOrdersIndexRoute,
