@@ -15,6 +15,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedCustomerBookRouteImport } from './routes/_authenticated/customer.book'
+import { Route as AuthenticatedRiderIndexRouteImport } from './routes/_authenticated/rider.index'
+import { Route as AuthenticatedRiderJobsRouteImport } from './routes/_authenticated/rider.jobs'
 import { Route as AuthenticatedCustomerOrdersIndexRouteImport } from './routes/_authenticated/customer.orders.index'
 import { Route as AuthenticatedCustomerOrdersOrderIdRouteImport } from './routes/_authenticated/customer.orders.$orderId'
 
@@ -49,6 +51,16 @@ const AuthenticatedCustomerBookRoute =
     path: '/customer/book',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRiderIndexRoute = AuthenticatedRiderIndexRouteImport.update({
+  id: '/rider/',
+  path: '/rider/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRiderJobsRoute = AuthenticatedRiderJobsRouteImport.update({
+  id: '/rider/jobs',
+  path: '/rider/jobs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCustomerOrdersIndexRoute =
   AuthenticatedCustomerOrdersIndexRouteImport.update({
     id: '/customer/orders/',
@@ -67,7 +79,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
+  '/rider/jobs': typeof AuthenticatedRiderJobsRoute
   '/customer/': typeof AuthenticatedCustomerIndexRoute
+  '/rider/': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
 }
@@ -76,7 +90,9 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
+  '/rider/jobs': typeof AuthenticatedRiderJobsRoute
   '/customer': typeof AuthenticatedCustomerIndexRoute
+  '/rider': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/customer/orders': typeof AuthenticatedCustomerOrdersIndexRoute
 }
@@ -87,7 +103,9 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/_authenticated/customer/book': typeof AuthenticatedCustomerBookRoute
+  '/_authenticated/rider/jobs': typeof AuthenticatedRiderJobsRoute
   '/_authenticated/customer/': typeof AuthenticatedCustomerIndexRoute
+  '/_authenticated/rider/': typeof AuthenticatedRiderIndexRoute
   '/_authenticated/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/_authenticated/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
 }
@@ -98,7 +116,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/customer/book'
+    | '/rider/jobs'
     | '/customer/'
+    | '/rider/'
     | '/customer/orders/$orderId'
     | '/customer/orders/'
   fileRoutesByTo: FileRoutesByTo
@@ -107,7 +127,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/customer/book'
+    | '/rider/jobs'
     | '/customer'
+    | '/rider'
     | '/customer/orders/$orderId'
     | '/customer/orders'
   id:
@@ -117,7 +139,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/_authenticated/customer/book'
+    | '/_authenticated/rider/jobs'
     | '/_authenticated/customer/'
+    | '/_authenticated/rider/'
     | '/_authenticated/customer/orders/$orderId'
     | '/_authenticated/customer/orders/'
   fileRoutesById: FileRoutesById
@@ -173,6 +197,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomerBookRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rider/': {
+      id: '/_authenticated/rider/'
+      path: '/rider'
+      fullPath: '/rider/'
+      preLoaderRoute: typeof AuthenticatedRiderIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rider/jobs': {
+      id: '/_authenticated/rider/jobs'
+      path: '/rider/jobs'
+      fullPath: '/rider/jobs'
+      preLoaderRoute: typeof AuthenticatedRiderJobsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/customer/orders/': {
       id: '/_authenticated/customer/orders/'
       path: '/customer/orders'
@@ -192,14 +230,18 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomerBookRoute: typeof AuthenticatedCustomerBookRoute
+  AuthenticatedRiderJobsRoute: typeof AuthenticatedRiderJobsRoute
   AuthenticatedCustomerIndexRoute: typeof AuthenticatedCustomerIndexRoute
+  AuthenticatedRiderIndexRoute: typeof AuthenticatedRiderIndexRoute
   AuthenticatedCustomerOrdersOrderIdRoute: typeof AuthenticatedCustomerOrdersOrderIdRoute
   AuthenticatedCustomerOrdersIndexRoute: typeof AuthenticatedCustomerOrdersIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomerBookRoute: AuthenticatedCustomerBookRoute,
+  AuthenticatedRiderJobsRoute: AuthenticatedRiderJobsRoute,
   AuthenticatedCustomerIndexRoute: AuthenticatedCustomerIndexRoute,
+  AuthenticatedRiderIndexRoute: AuthenticatedRiderIndexRoute,
   AuthenticatedCustomerOrdersOrderIdRoute:
     AuthenticatedCustomerOrdersOrderIdRoute,
   AuthenticatedCustomerOrdersIndexRoute: AuthenticatedCustomerOrdersIndexRoute,
