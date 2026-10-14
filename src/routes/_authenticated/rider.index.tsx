@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { isUserRider } from "@/features/auth/roles";
 import { useQuery, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { Bike, Crosshair, Loader2, MapPin, Navigation, PackageOpen, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, Bike, Crosshair, Filter, Loader2, MapPin, Navigation, PackageOpen, ShieldCheck, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, DashCard, EmptyState, ErrorState } from "@/components/shared/States";
@@ -251,38 +251,79 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
         </Button>
       </div>
 
-      {/* Filters */}
-      <DashCard title="Filter pickups" description={`Showing ${rider.vehicle_type === "CARGO" ? "cargo" : "bike"}-compatible orders only.`}>
-        <div className="space-y-4">
-          <FilterRow label="Within">
-            <div className="flex flex-wrap gap-2">
+      {/* Compact Filter Toolbar with Inline Dropdowns */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+            <Filter className="size-3.5 text-primary" />
+            <span>Filter pickups:</span>
+          </div>
+
+          {/* Radius Dropdown */}
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground text-[11px]">Radius:</span>
+            <select
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+              className="h-8 rounded-xl border border-border bg-secondary/50 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-secondary transition-colors"
+            >
               {RADII.map((r) => (
-                <Chip key={r} active={radius === r} onClick={() => setRadius(r)}>{r} km</Chip>
+                <option key={r} value={r}>{r} km radius</option>
               ))}
-            </div>
-          </FilterRow>
-          <FilterRow label="Priority">
-            <div className="flex flex-wrap gap-2">
-              <Chip active={priority === null} onClick={() => setPriority(null)}>All</Chip>
-              {(["URGENT", "HIGH", "NORMAL"] as Priority[]).map((p) => (
-                <Chip key={p} active={priority === p} onClick={() => setPriority(p)}>{PRIORITY_LABEL[p]}</Chip>
-              ))}
-            </div>
-          </FilterRow>
-          <FilterRow label="Sort by">
-            <div className="flex flex-wrap gap-2">
-              <Chip active={sort === "nearest"} onClick={() => setSort("nearest")}>Nearest first</Chip>
-              <Chip active={sort === "priority"} onClick={() => setSort("priority")}>Priority first</Chip>
-            </div>
-          </FilterRow>
+            </select>
+          </div>
+
+          {/* Priority Dropdown */}
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground text-[11px]">Priority:</span>
+            <select
+              value={priority ?? "ALL"}
+              onChange={(e) => setPriority(e.target.value === "ALL" ? null : (e.target.value as Priority))}
+              className="h-8 rounded-xl border border-border bg-secondary/50 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-secondary transition-colors"
+            >
+              <option value="ALL">All Priorities</option>
+              <option value="URGENT">🚨 Urgent Only</option>
+              <option value="HIGH">⚡ High Priority</option>
+              <option value="NORMAL">Standard Only</option>
+            </select>
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground text-[11px]">Sort:</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortMode)}
+              className="h-8 rounded-xl border border-border bg-secondary/50 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-secondary transition-colors"
+            >
+              <option value="nearest">Nearest first</option>
+              <option value="priority">Priority first</option>
+            </select>
+          </div>
         </div>
-      </DashCard>
+
+        {/* Vehicle matching indicator */}
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-secondary/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+            <VehicleIcon v={rider.vehicle_type} className="size-3.5 text-primary" />
+            <span>Showing {rider.vehicle_type === "CARGO" ? "cargo" : "bike"} orders</span>
+          </span>
+        </div>
+      </div>
 
       {/* Nearby orders */}
       <section>
-        <h2 className="mb-3 text-base font-semibold">Pickups within {radius} km{priority ? ` · ${PRIORITY_LABEL[priority]}` : ""}</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-bold text-foreground">
+            Pickups within {radius} km{priority ? ` · ${PRIORITY_LABEL[priority]}` : ""}
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {orders.data?.length ?? 0} available {orders.data?.length === 1 ? "delivery" : "deliveries"}
+          </span>
+        </div>
+
         {!hasLocation ? (
-          <EmptyState icon={MapPin} title="Set your location first" description="Choose your current location or a demo spot above, and nearby pickups will appear here." />
+          <EmptyState icon={MapPin} title="Set your location first" description="Allow browser location access or tap update location above." />
         ) : orders.isLoading ? (
           <CardSkeleton rows={3} />
         ) : orders.isError ? (
@@ -290,7 +331,7 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
         ) : (orders.data?.length ?? 0) === 0 ? (
           <EmptyState icon={PackageOpen} title="No pickups nearby right now" description="New orders land here automatically — check again in a bit, or widen the radius." />
         ) : (
-          <ul className="grid gap-3">
+          <ul className="grid gap-3.5">
             {orders.data!.map((o, i) => {
               const isUrgent = o.priority === "URGENT";
               const isHigh = o.priority === "HIGH";
@@ -299,24 +340,25 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
                 <li
                   key={o.id}
                   className={cn(
-                    "animate-enter rounded-2xl border p-4 shadow-soft transition-all hover:border-primary/50",
+                    "animate-enter rounded-2xl border p-4 sm:p-5 shadow-soft transition-all hover:border-primary/50",
                     isUrgent
                       ? "border-rose-500/60 bg-rose-500/[0.04] ring-1 ring-rose-500/30 hover:bg-rose-500/[0.07]"
                       : isHigh
                       ? "border-amber-500/50 bg-amber-500/[0.04] ring-1 ring-amber-500/25 hover:bg-amber-500/[0.07]"
-                      : "border-border bg-card hover:bg-secondary/20"
+                      : "border-border bg-card hover:bg-secondary/15"
                   )}
                   style={{ animationDelay: `${i * 50}ms` }}
                 >
-                  {/* Rider Decision Bar: Order #Ref · Distance · Priority */}
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5 text-xs">
+                  {/* Top Bar: Order ID, Distance from rider, Priority */}
+                  <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold tracking-wide text-foreground">
                         Order #{o.id.slice(0, 8).toUpperCase()}
                       </span>
                       <span className="text-muted-foreground">·</span>
-                      <span className="font-semibold text-primary">
-                        {Number(o.pickup_distance_km).toFixed(1)} km away
+                      <span className="inline-flex items-center gap-1 font-bold text-primary">
+                        <MapPin className="size-3.5" />
+                        {Number(o.pickup_distance_km).toFixed(1)} km from your location
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -330,32 +372,80 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                        <VehicleIcon v={o.vehicle_type} className="size-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">{o.pickup_address}</p>
-                        <p className="truncate text-xs text-muted-foreground">{o.parcel_summary}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold tabular-nums text-foreground">{Number(o.pickup_distance_km).toFixed(1)} km</p>
-                      <p className="text-xs text-muted-foreground">pickup distance</p>
-                    </div>
-                  </div>
+                  {/* Main Grid: Route & Parcel on Left, Fare & Action on Right */}
+                  <div className="grid gap-4 md:grid-cols-[1fr_210px] items-center">
+                    {/* Left: Connected Route Timeline (Pickup -> Dropoff) */}
+                    <div className="space-y-2.5">
+                      <div className="space-y-1.5 rounded-xl border border-border/70 bg-secondary/20 p-3">
+                        {/* Pickup Stop */}
+                        <div className="flex items-start gap-2.5">
+                          <div className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-500">
+                            <span className="size-2 rounded-full bg-emerald-500" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">Pickup Location</span>
+                            <p className="text-xs font-semibold text-foreground truncate">{o.pickup_address}</p>
+                          </div>
+                        </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2 pt-1">
-                    {o.handle_with_care && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                        <ShieldCheck className="size-3" /> Handle with care
-                      </span>
-                    )}
-                    <span className="text-xs text-muted-foreground">posted {timeAgo(o.created_at)}</span>
-                    <Button size="sm" variant={isUrgent ? "default" : "hero"} className={cn("ml-auto", isUrgent && "bg-rose-600 hover:bg-rose-700 text-white")} onClick={() => accept(o.id)}>
-                      Accept job
-                    </Button>
+                        {/* Route Distance Line */}
+                        <div className="ml-2.5 pl-3 border-l-2 border-dashed border-border py-0.5 text-[10px] text-muted-foreground font-medium">
+                          {o.trip_distance_km ? `Trip route: ~${Number(o.trip_distance_km).toFixed(1)} km delivery` : "Direct route delivery"}
+                        </div>
+
+                        {/* Drop-off Stop */}
+                        <div className="flex items-start gap-2.5">
+                          <div className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-accent/20 text-accent">
+                            <Navigation className="size-3 text-accent" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-accent">Drop-off Destination</span>
+                            <p className="text-xs font-semibold text-foreground truncate">{o.dropoff_address || "Karachi Destination"}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Package Summary & Details */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-0.5">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-secondary/60 px-2 py-0.5 font-medium text-foreground">
+                          <VehicleIcon v={o.vehicle_type} className="size-3 text-primary" />
+                          <span>{o.vehicle_type === "CARGO" ? "Cargo" : "Bike"}</span>
+                        </span>
+                        <span className="truncate max-w-xs">{o.parcel_summary}</span>
+                        {o.handle_with_care && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                            <ShieldCheck className="size-3" /> Handle with care
+                          </span>
+                        )}
+                        <span className="text-[11px] text-muted-foreground ml-auto">posted {timeAgo(o.created_at)}</span>
+                      </div>
+                    </div>
+
+                    {/* Right: Job Payout / Fare & Accept Button */}
+                    <div className="flex flex-col items-end justify-center gap-2.5 border-t border-border/50 pt-3 md:border-t-0 md:border-l md:border-border/60 md:pl-4 md:pt-0">
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Guaranteed Payout</span>
+                        <p className="text-2xl font-black tabular-nums text-primary">
+                          {o.total_fare ? `Rs. ${o.total_fare}` : "Rs. Fare"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {Number(o.pickup_distance_km).toFixed(1)} km to pickup
+                        </p>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant={isUrgent ? "default" : "hero"}
+                        className={cn(
+                          "w-full gap-1.5 font-bold text-xs h-9.5 shadow-soft",
+                          isUrgent && "bg-rose-600 hover:bg-rose-700 text-white"
+                        )}
+                        onClick={() => accept(o.id)}
+                      >
+                        <span>Accept job</span>
+                        <ArrowRight className="size-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </li>
               );

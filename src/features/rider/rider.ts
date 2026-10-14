@@ -4,7 +4,11 @@ import type { Database } from "@/integrations/supabase/types";
 import { friendlyError } from "@/features/orders/orders";
 
 export type Priority = Database["public"]["Enums"]["order_priority"];
-export type AvailableOrder = Database["public"]["Functions"]["get_available_orders"]["Returns"][number];
+export type AvailableOrder = Database["public"]["Functions"]["get_available_orders"]["Returns"][number] & {
+  dropoff_address?: string;
+  total_fare?: number | null;
+  trip_distance_km?: number | null;
+};
 export const RADII = [1, 3, 5, 10, 20] as const;
 export type SortMode = "nearest" | "priority";
 
@@ -25,10 +29,33 @@ export const riderProfileQuery = queryOptions({
 export const availableOrdersQuery = (radius: number, priority: Priority | null, sort: SortMode, locKey: string) =>
   queryOptions({
     queryKey: ["rider", "available", radius, priority, sort, locKey],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_available_orders", { p_radius_km: radius, p_sort: sort, ...(priority ? { p_priority: priority } : {}) });
+    queryFn: async (): Promise<AvailableOrder[]> => {
+      const { data, error } = await supabase.rpc("get_available_orders", {
+        p_radius_km: radius,
+        p_sort: sort,
+        ...(priority ? { p_priority: priority } : {}),
+      });
       if (error) throw new Error(friendlyError(error));
-      return data;
+      if (!data || data.length === 0) return [];
+
+      // Query full order details for dropoff address, fare, and trip distance
+      const ids = data.map((d) => d.id);
+      const { data: fullDetails } = await supabase
+        .from("orders")
+        .select("id, dropoff_address, total_fare, distance_km")
+        .in("id", ids);
+
+      const map = new Map(fullDetails?.map((f) => [f.id, f]) ?? []);
+
+      return data.map((d) => {
+        const extra = map.get(d.id);
+        return {
+          ...d,
+          dropoff_address: extra?.dropoff_address ?? "Karachi Delivery Point",
+          total_fare: extra?.total_fare ? Number(extra.total_fare) : null,
+          trip_distance_km: extra?.distance_km ? Number(extra.distance_km) : null,
+        };
+      });
     },
   });
 
