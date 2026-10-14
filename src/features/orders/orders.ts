@@ -37,9 +37,9 @@ export const profileQuery = queryOptions({
   queryFn: async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw new Error("Not signed in");
-    const { data, error } = await supabase.from("profiles").select("id, full_name, is_active").eq("id", u.user.id).maybeSingle();
+    const { data, error } = await supabase.from("profiles").select("id, full_name, phone, is_active").eq("id", u.user.id).maybeSingle();
     if (error) throw error;
-    return { id: u.user.id, email: u.user.email ?? "", full_name: data?.full_name || u.user.email?.split("@")[0] || "there", is_active: data?.is_active ?? true };
+    return { id: u.user.id, email: u.user.email ?? "", full_name: data?.full_name || u.user.email?.split("@")[0] || "there", phone: data?.phone ?? "", is_active: data?.is_active ?? true };
   },
 });
 

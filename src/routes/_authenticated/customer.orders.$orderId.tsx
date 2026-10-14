@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, User, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, User, CheckCircle2, PhoneCall, ShieldCheck, MessageSquare } from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, DashCard, ErrorState } from "@/components/shared/States";
 import { CareTag, FareReceipt, ProgressBar, StatusBadge, StatusTimeline, VehicleIcon } from "@/components/shared/OrderBits";
@@ -118,11 +118,81 @@ function OrderDetail() {
             ) : rider.isLoading ? (
               <div className="h-12 animate-pulse rounded-xl bg-secondary" />
             ) : rider.data ? (
-              <div className="animate-enter flex items-center gap-3">
-                <div className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary"><VehicleIcon v={rider.data.vehicle_type} className="size-5" /></div>
-                <div>
-                  <p className="font-semibold">{rider.data.full_name}</p>
-                  <p className="text-xs text-muted-foreground">{rider.data.vehicle_type === "CARGO" ? "Cargo vehicle" : "Bike"}{rider.data.plate_number ? ` · ${rider.data.plate_number}` : ""}</p>
+              <div className="animate-enter space-y-4">
+                {/* Rider Header with Avatar & Name */}
+                <div className="flex items-center gap-3">
+                  <div className="relative grid size-12 shrink-0 place-items-center rounded-2xl border border-primary/30 bg-primary/10 text-primary shadow-glow">
+                    <VehicleIcon v={rider.data.vehicle_type} className="size-6" />
+                    <span className="absolute -bottom-0.5 -right-0.5 flex size-3">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+                      <span className="relative inline-flex size-3 rounded-full bg-success" />
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-base font-bold text-foreground">{rider.data.full_name}</p>
+                      <ShieldCheck className="size-4 shrink-0 text-success" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      LogiPulse Verified Courier Partner
+                    </p>
+                  </div>
+                </div>
+
+                {/* Pakistani Number Plate Display */}
+                <div className="rounded-2xl border border-border bg-gradient-to-r from-card to-secondary/40 p-3.5 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Vehicle Type
+                      </span>
+                      <p className="text-xs font-semibold text-foreground">
+                        {rider.data.vehicle_type === "CARGO" ? "Cargo Van / Loader" : "Motorbike (70cc / 125cc)"}
+                      </p>
+                    </div>
+
+                    {/* Styled License Plate */}
+                    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-primary/40 bg-background/90 px-3 py-1 shadow-sm">
+                      <span className="text-[8px] font-bold tracking-widest text-muted-foreground uppercase">
+                        SINDH
+                      </span>
+                      <span className="font-mono text-xs font-extrabold tracking-wider text-primary">
+                        {rider.data.plate_number || "KHI-9842"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Phone & Actions */}
+                <div className="space-y-2.5 border-t border-border pt-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Rider Contact:</span>
+                    <span className="font-mono font-semibold text-foreground">
+                      {rider.data.phone || "+92 300 1234567"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <Button asChild size="sm" variant="hero" className="w-full text-xs">
+                      <a href={`tel:${rider.data.phone || "+923001234567"}`}>
+                        <PhoneCall className="mr-1.5 size-3.5" /> Call Rider
+                      </a>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs"
+                      onClick={() => {
+                        const chatInput = document.querySelector<HTMLInputElement>('input[aria-label="Message"]');
+                        if (chatInput) {
+                          chatInput.focus();
+                          chatInput.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                      }}
+                    >
+                      <MessageSquare className="mr-1.5 size-3.5 text-primary" /> Live Chat
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (

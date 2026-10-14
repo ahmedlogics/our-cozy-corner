@@ -19,7 +19,7 @@ export const messagesQuery = (orderId: string) =>
       if (error) throw new Error(friendlyError(error));
       return data;
     },
-    refetchInterval: 10000, // fallback if realtime is unavailable
+    refetchInterval: 3000, // fast polling fallback so chat feels instantaneous
   });
 
 export async function sendMessage(orderId: string, body: string) {
