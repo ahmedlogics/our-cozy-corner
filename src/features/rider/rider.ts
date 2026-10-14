@@ -26,7 +26,7 @@ export const availableOrdersQuery = (radius: number, priority: Priority | null, 
   queryOptions({
     queryKey: ["rider", "available", radius, priority, sort, locKey],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_available_orders", { p_radius_km: radius, p_priority: priority ?? undefined, p_sort: sort });
+      const { data, error } = await supabase.rpc("get_available_orders", { p_radius_km: radius, p_sort: sort, ...(priority ? { p_priority: priority } : {}) });
       if (error) throw new Error(friendlyError(error));
       return data;
     },
