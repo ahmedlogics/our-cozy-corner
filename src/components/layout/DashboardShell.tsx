@@ -10,7 +10,7 @@ export interface NavItem {
   label: string;
   icon: LucideIcon;
   active?: boolean;
-  to?: "/customer" | "/customer/book" | "/customer/orders" | "/rider" | "/rider/history";
+  to?: "/customer" | "/customer/book" | "/customer/orders";
 }
 
 const itemCls = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-primary";
