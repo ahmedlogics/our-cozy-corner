@@ -11,6 +11,18 @@ import { customerNav } from "@/features/customer/nav";
 import { orderQuery, orderRiderQuery, profileQuery } from "@/features/orders/orders";
 import { useOrdersRealtime } from "@/features/orders/realtime";
 
+function OrderDetailErrorComponent({ error }: { error: unknown }) {
+  const router = useRouter();
+  return (
+    <div className="p-8">
+      <ErrorState description={(error as Error).message} />
+      <Button className="mt-4" onClick={() => router.invalidate()}>
+        Retry
+      </Button>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/customer/orders/$orderId")({
   validateSearch: (s: Record<string, unknown>): { created?: boolean } => (s["created"] ? { created: true } : {}),
   head: () => ({
@@ -29,10 +41,7 @@ export const Route = createFileRoute("/_authenticated/customer/orders/$orderId")
     if (!d.order) throw notFound();
   },
   pendingComponent: () => <DashboardShell role="Customer" title="Order" items={customerNav("orders")}><CardSkeleton rows={6} /></DashboardShell>,
-  errorComponent: ({ error }) => {
-    const router = useRouter();
-    return <div className="p-8"><ErrorState description={(error as Error).message} /><Button className="mt-4" onClick={() => router.invalidate()}>Retry</Button></div>;
-  },
+  errorComponent: OrderDetailErrorComponent,
   notFoundComponent: () => (
     <DashboardShell role="Customer" title="Order" items={customerNav("orders")}>
       <ErrorState title="Order not found" description="This order doesn't exist or isn't yours." />

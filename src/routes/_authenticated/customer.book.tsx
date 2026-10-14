@@ -17,6 +17,18 @@ import { customerNav } from "@/features/customer/nav";
 import { haversineKm } from "@/features/locations/haversine";
 import { createOrder, fetchQuote, serviceAreasQuery, type BookingInput, type Quote, type VehicleType } from "@/features/orders/orders";
 
+function BookErrorComponent({ error }: { error: unknown }) {
+  const router = useRouter();
+  return (
+    <div className="p-8">
+      <ErrorState description={(error as Error).message} />
+      <Button className="mt-4" onClick={() => router.invalidate()}>
+        Retry
+      </Button>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/customer/book")({
   head: () => ({
     meta: [
@@ -30,10 +42,7 @@ export const Route = createFileRoute("/_authenticated/customer/book")({
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(serviceAreasQuery),
   pendingComponent: () => <DashboardShell role="Customer" title="New delivery" items={customerNav("book")}><CardSkeleton rows={6} /></DashboardShell>,
-  errorComponent: ({ error }) => {
-    const router = useRouter();
-    return <div className="p-8"><ErrorState description={(error as Error).message} /><Button className="mt-4" onClick={() => router.invalidate()}>Retry</Button></div>;
-  },
+  errorComponent: BookErrorComponent,
   notFoundComponent: () => <div className="p-8">Not found.</div>,
   component: Book,
 });
@@ -41,10 +50,24 @@ export const Route = createFileRoute("/_authenticated/customer/book")({
 const STEPS = ["Pickup & drop-off", "Recipient & parcel", "Price & confirm"];
 const validPt = (p: Pt | null): p is Pt => !!p && Number.isFinite(p.lat) && Number.isFinite(p.lng) && Math.abs(p.lat) <= 90 && Math.abs(p.lng) <= 180;
 
+const KARACHI_AREAS = [
+  { name: "Saddar", lat: 24.856, lng: 67.031 },
+  { name: "Clifton", lat: 24.8138, lng: 67.0299 },
+  { name: "DHA Phase 5", lat: 24.8015, lng: 67.0658 },
+  { name: "Gulshan-e-Iqbal", lat: 24.92, lng: 67.099 },
+  { name: "North Nazimabad", lat: 24.9425, lng: 67.04 },
+  { name: "Tariq Road", lat: 24.8715, lng: 67.062 },
+] as const;
+
 function CoordInputs({ value, onChange, id }: { value: Pt | null; onChange: (p: Pt | null) => void; id: string }) {
   const [lat, setLat] = useState(value ? String(value.lat) : "");
   const [lng, setLng] = useState(value ? String(value.lng) : "");
-  useEffect(() => { setLat(value ? String(value.lat) : ""); setLng(value ? String(value.lng) : ""); }, [value?.lat, value?.lng]);
+
+  useEffect(() => {
+    setLat(value ? String(value.lat) : "");
+    setLng(value ? String(value.lng) : "");
+  }, [value]);
+
   const commit = (a: string, b: string) => {
     const p = { lat: Number(a), lng: Number(b) };
     if (a && b && validPt(p)) onChange(p);
@@ -182,6 +205,33 @@ function Book() {
                   {geo === "asking" ? <Loader2 className="animate-spin" /> : <Crosshair />} Use my location
                 </Button>
               </div>
+
+              <div className="space-y-1.5 rounded-xl border border-border bg-secondary/30 p-2.5">
+                <p className="text-xs font-medium text-muted-foreground">Select {which === "pickup" ? "pickup" : "drop-off"} area:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {KARACHI_AREAS.map((a) => (
+                    <button
+                      key={a.name}
+                      type="button"
+                      onClick={() => {
+                        const pt = { lat: a.lat, lng: a.lng };
+                        if (which === "pickup") {
+                          setPickup(pt);
+                          if (!pickupAddr) setPickupAddr(`${a.name}, Karachi`);
+                          setWhich("dropoff");
+                        } else {
+                          setDropoff(pt);
+                          if (!dropAddr) setDropAddr(`${a.name}, Karachi`);
+                        }
+                      }}
+                      className="rounded-lg border border-border bg-card px-2.5 py-1 text-xs transition-colors hover:border-primary hover:bg-primary/10"
+                    >
+                      {a.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {geo === "suggested" && suggested && (
                 <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 p-3 text-sm">
                   <span>Suggested pickup: <span className="font-mono">{suggested.lat}, {suggested.lng}</span>{outside(suggested) && <span className="text-destructive"> — outside service area</span>}</span>
@@ -189,7 +239,7 @@ function Book() {
                   <Button size="sm" variant="ghost" onClick={() => setGeo("idle")}>Pick another</Button>
                 </div>
               )}
-              {geo === "denied" && <p className="rounded-xl bg-warning/10 p-3 text-sm text-warning">Location access unavailable — tap the map to place your pickup pin instead.</p>}
+              {geo === "denied" && <p className="rounded-xl bg-warning/10 p-3 text-sm text-warning">Location access unavailable — select an area above or tap the map.</p>}
               <MapPicker
                 key={which}
                 label={`Map: tap to set ${which}`}
@@ -200,21 +250,35 @@ function Book() {
                 tone={which === "pickup" ? "primary" : "accent"}
                 onChange={(p) => (which === "pickup" ? setPickup(p) : setDropoff(p))}
               />
-              <p className="text-xs text-muted-foreground">Tap the map to place the {which === "pickup" ? "pickup" : "destination"} pin. The green circle is our {area?.name} service area. Written addresses are not auto-located — pins set the exact point.</p>
+              <p className="text-xs text-muted-foreground">Click an area above or tap the map to place pins. The circle indicates the {area?.name} service area.</p>
             </div>
             <div className="space-y-5">
               <fieldset className="space-y-2">
                 <legend className="flex items-center gap-2 text-sm font-semibold"><MapPin className="size-4 text-primary" /> Pickup</legend>
                 <Textarea placeholder="House / street / area, landmarks" value={pickupAddr} onChange={(e) => setPickupAddr(e.target.value)} rows={2} />
                 <Err k="pickupAddr" />
-                <CoordInputs id="pu" value={pickup} onChange={setPickup} />
+                <details className="pt-1 text-xs">
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    Manual GPS Coordinates (Optional)
+                  </summary>
+                  <div className="mt-2 pt-2 border-t border-border">
+                    <CoordInputs id="pu" value={pickup} onChange={setPickup} />
+                  </div>
+                </details>
                 <Err k="pickup" />
               </fieldset>
               <fieldset className="space-y-2">
                 <legend className="flex items-center gap-2 text-sm font-semibold"><MapPin className="size-4 text-accent" /> Drop-off</legend>
                 <Textarea placeholder="House / street / area, landmarks" value={dropAddr} onChange={(e) => setDropAddr(e.target.value)} rows={2} />
                 <Err k="dropAddr" />
-                <CoordInputs id="do" value={dropoff} onChange={setDropoff} />
+                <details className="pt-1 text-xs">
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    Manual GPS Coordinates (Optional)
+                  </summary>
+                  <div className="mt-2 pt-2 border-t border-border">
+                    <CoordInputs id="do" value={dropoff} onChange={setDropoff} />
+                  </div>
+                </details>
                 <Err k="dropoff" />
               </fieldset>
             </div>

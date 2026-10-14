@@ -34,19 +34,37 @@ function Nav() {
           ))}
         </ul>
         <div className="hidden items-center gap-2 md:flex">
-          <Button asChild variant="ghost" className="rounded-full"><Link to="/auth">Sign in</Link></Button>
-          <Button asChild variant="hero"><Link to="/auth" search={{ intent: "customer" }}>Book a delivery</Link></Button>
+          <Button asChild variant="ghost" className="rounded-full">
+            <Link to="/auth" search={{ intent: "rider" }}>
+              <Bike className="mr-1 size-4 text-primary" /> Become a rider
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" className="rounded-full">
+            <Link to="/auth">Sign in</Link>
+          </Button>
+          <Button asChild variant="hero">
+            <Link to="/auth" search={{ intent: "customer" }}>Book a delivery</Link>
+          </Button>
         </div>
         <Button variant="ghost" size="icon" className="md:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>
           {open ? <X /> : <Menu />}
         </Button>
       </nav>
       {open && (
-        <div className="glass mx-4 mt-2 rounded-2xl p-4 md:hidden">
+        <div className="glass mx-4 mt-2 space-y-2 rounded-2xl p-4 md:hidden">
           {NAV.map((n) => (
-            <a key={n.href} href={n.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 text-sm hover:bg-secondary">{n.label}</a>
+            <a key={n.href} href={n.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm hover:bg-secondary">{n.label}</a>
           ))}
-          <Button asChild variant="hero" className="mt-2 w-full"><Link to="/auth">Sign in</Link></Button>
+          <div className="pt-2 border-t border-border flex flex-col gap-2">
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/auth" search={{ intent: "rider" }}>
+                <Bike className="mr-2 size-4 text-primary" /> Become a rider
+              </Link>
+            </Button>
+            <Button asChild variant="hero" className="w-full">
+              <Link to="/auth">Sign in</Link>
+            </Button>
+          </div>
         </div>
       )}
     </header>

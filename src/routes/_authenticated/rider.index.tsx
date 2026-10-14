@@ -23,6 +23,18 @@ const DEMO_SPOTS = [
   { name: "North Nazimabad", lat: 24.9425, lng: 67.04 },
 ] as const;
 
+function RiderErrorComponent({ error }: { error: unknown }) {
+  const router = useRouter();
+  return (
+    <div className="p-8">
+      <ErrorState description={(error as Error).message} />
+      <Button className="mt-4" onClick={() => router.invalidate()}>
+        Retry
+      </Button>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/rider/")({
   head: () => ({
     meta: [
@@ -41,10 +53,7 @@ export const Route = createFileRoute("/_authenticated/rider/")({
       <CardSkeleton rows={4} />
     </DashboardShell>
   ),
-  errorComponent: ({ error }) => {
-    const router = useRouter();
-    return <div className="p-8"><ErrorState description={(error as Error).message} /><Button className="mt-4" onClick={() => router.invalidate()}>Retry</Button></div>;
-  },
+  errorComponent: RiderErrorComponent,
   component: RiderDashboard,
 });
 

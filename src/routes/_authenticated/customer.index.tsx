@@ -8,6 +8,18 @@ import { Button } from "@/components/ui/button";
 import { customerNav } from "@/features/customer/nav";
 import { ACTIVE_STATUSES, myOrdersQuery, profileQuery } from "@/features/orders/orders";
 
+function CustomerErrorComponent({ error }: { error: unknown }) {
+  const router = useRouter();
+  return (
+    <div className="p-8">
+      <ErrorState description={(error as Error).message} />
+      <Button className="mt-4" onClick={() => router.invalidate()}>
+        Retry
+      </Button>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/customer/")({
   head: () => ({
     meta: [
@@ -25,10 +37,7 @@ export const Route = createFileRoute("/_authenticated/customer/")({
       <CardSkeleton rows={1} /><div className="grid gap-4 sm:grid-cols-3"><CardSkeleton rows={1} /><CardSkeleton rows={1} /><CardSkeleton rows={1} /></div><CardSkeleton rows={4} />
     </DashboardShell>
   ),
-  errorComponent: ({ error }) => {
-    const router = useRouter();
-    return <div className="p-8"><ErrorState description={(error as Error).message} /><Button className="mt-4" onClick={() => router.invalidate()}>Retry</Button></div>;
-  },
+  errorComponent: CustomerErrorComponent,
   notFoundComponent: () => <div className="p-8">Not found.</div>,
   component: Overview,
 });

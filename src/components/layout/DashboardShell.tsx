@@ -23,7 +23,15 @@ function SideNav({ items, role, onNav }: { items: NavItem[]; role: string; onNav
       <nav className="flex flex-col gap-1" aria-label={`${role} navigation`}>
         {items.map((it) =>
           it.to ? (
-            <Link key={it.label} to={it.to} onClick={onNav} aria-current={it.active ? "page" : undefined} className={itemCls}>
+            <Link
+              key={it.label}
+              to={it.to}
+              onClick={onNav}
+              activeOptions={{ exact: true }}
+              activeProps={{ "aria-current": "page" }}
+              aria-current={it.active ? "page" : undefined}
+              className={itemCls}
+            >
               <it.icon className="size-4" /> {it.label}
             </Link>
           ) : (
