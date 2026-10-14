@@ -79,14 +79,20 @@ export function StatusTimeline({ order, events }: { order: Order; events: OrderE
   const steps = order.status === "CANCELLED" ? [...STATUS_FLOW.slice(0, 1), "CANCELLED" as const] : STATUS_FLOW;
   const cur = steps.indexOf(order.status);
   return (
-    <ol className="space-y-4">
+    <ol>
       {steps.map((s, i) => {
         const ev = reached.get(s);
         const done = i <= cur;
+        const last = i === steps.length - 1;
         return (
-          <li key={s} className="flex gap-3">
-            <div className={cn("grid size-7 shrink-0 place-items-center rounded-full border text-xs", done ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground", i === cur && order.status !== "DELIVERED" && "animate-pulse")}>
-              {done ? <Check className="size-4" /> : <Clock className="size-3.5" />}
+          <li key={s} className="relative flex gap-3 pb-5 last:pb-0">
+            {!last && (
+              <span className="absolute left-[13px] top-7 h-[calc(100%-1.75rem)] w-0.5 overflow-hidden rounded-full bg-border" aria-hidden>
+                <span className="block w-full bg-primary transition-[height] duration-700 ease-out" style={{ height: i < cur ? "100%" : "0%", transitionDelay: `${i * 120}ms` }} />
+              </span>
+            )}
+            <div className={cn("relative z-10 grid size-7 shrink-0 place-items-center rounded-full border text-xs transition-colors duration-500", done ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground", i === cur && order.status !== "DELIVERED" && "ring-4 ring-primary/20")}>
+              {done ? <Check key={`${s}-done`} className="animate-pop size-4" /> : <Clock className="size-3.5" />}
             </div>
             <div>
               <p className={cn("text-sm font-medium", !done && "text-muted-foreground")}>{STATUS_LABEL[s]}</p>

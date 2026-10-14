@@ -19,6 +19,7 @@ import { Route as AuthenticatedRiderIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedRiderJobsRouteImport } from './routes/_authenticated/rider.jobs'
 import { Route as AuthenticatedCustomerOrdersIndexRouteImport } from './routes/_authenticated/customer.orders.index'
 import { Route as AuthenticatedCustomerOrdersOrderIdRouteImport } from './routes/_authenticated/customer.orders.$orderId'
+import { Route as AuthenticatedRiderJobsOrderIdRouteImport } from './routes/_authenticated/rider.jobs.$orderId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -73,16 +74,23 @@ const AuthenticatedCustomerOrdersOrderIdRoute =
     path: '/customer/orders/$orderId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRiderJobsOrderIdRoute =
+  AuthenticatedRiderJobsOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedRiderJobsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
-  '/rider/jobs': typeof AuthenticatedRiderJobsRoute
+  '/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
   '/customer/': typeof AuthenticatedCustomerIndexRoute
   '/rider/': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
+  '/rider/jobs/$orderId': typeof AuthenticatedRiderJobsOrderIdRoute
   '/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -90,10 +98,11 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
-  '/rider/jobs': typeof AuthenticatedRiderJobsRoute
+  '/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
   '/customer': typeof AuthenticatedCustomerIndexRoute
   '/rider': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
+  '/rider/jobs/$orderId': typeof AuthenticatedRiderJobsOrderIdRoute
   '/customer/orders': typeof AuthenticatedCustomerOrdersIndexRoute
 }
 export interface FileRoutesById {
@@ -103,10 +112,11 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/_authenticated/customer/book': typeof AuthenticatedCustomerBookRoute
-  '/_authenticated/rider/jobs': typeof AuthenticatedRiderJobsRoute
+  '/_authenticated/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
   '/_authenticated/customer/': typeof AuthenticatedCustomerIndexRoute
   '/_authenticated/rider/': typeof AuthenticatedRiderIndexRoute
   '/_authenticated/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
+  '/_authenticated/rider/jobs/$orderId': typeof AuthenticatedRiderJobsOrderIdRoute
   '/_authenticated/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/customer/'
     | '/rider/'
     | '/customer/orders/$orderId'
+    | '/rider/jobs/$orderId'
     | '/customer/orders/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/customer'
     | '/rider'
     | '/customer/orders/$orderId'
+    | '/rider/jobs/$orderId'
     | '/customer/orders'
   id:
     | '__root__'
@@ -143,6 +155,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customer/'
     | '/_authenticated/rider/'
     | '/_authenticated/customer/orders/$orderId'
+    | '/_authenticated/rider/jobs/$orderId'
     | '/_authenticated/customer/orders/'
   fileRoutesById: FileRoutesById
 }
@@ -225,12 +238,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomerOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rider/jobs/$orderId': {
+      id: '/_authenticated/rider/jobs/$orderId'
+      path: '/$orderId'
+      fullPath: '/rider/jobs/$orderId'
+      preLoaderRoute: typeof AuthenticatedRiderJobsOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRiderJobsRoute
+    }
   }
 }
 
+interface AuthenticatedRiderJobsRouteChildren {
+  AuthenticatedRiderJobsOrderIdRoute: typeof AuthenticatedRiderJobsOrderIdRoute
+}
+
+const AuthenticatedRiderJobsRouteChildren: AuthenticatedRiderJobsRouteChildren =
+  {
+    AuthenticatedRiderJobsOrderIdRoute: AuthenticatedRiderJobsOrderIdRoute,
+  }
+
+const AuthenticatedRiderJobsRouteWithChildren =
+  AuthenticatedRiderJobsRoute._addFileChildren(
+    AuthenticatedRiderJobsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomerBookRoute: typeof AuthenticatedCustomerBookRoute
-  AuthenticatedRiderJobsRoute: typeof AuthenticatedRiderJobsRoute
+  AuthenticatedRiderJobsRoute: typeof AuthenticatedRiderJobsRouteWithChildren
   AuthenticatedCustomerIndexRoute: typeof AuthenticatedCustomerIndexRoute
   AuthenticatedRiderIndexRoute: typeof AuthenticatedRiderIndexRoute
   AuthenticatedCustomerOrdersOrderIdRoute: typeof AuthenticatedCustomerOrdersOrderIdRoute
@@ -239,7 +273,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomerBookRoute: AuthenticatedCustomerBookRoute,
-  AuthenticatedRiderJobsRoute: AuthenticatedRiderJobsRoute,
+  AuthenticatedRiderJobsRoute: AuthenticatedRiderJobsRouteWithChildren,
   AuthenticatedCustomerIndexRoute: AuthenticatedCustomerIndexRoute,
   AuthenticatedRiderIndexRoute: AuthenticatedRiderIndexRoute,
   AuthenticatedCustomerOrdersOrderIdRoute:

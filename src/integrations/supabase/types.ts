@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      messages: {
+        Row: { id: string; order_id: string; sender_id: string; body: string; created_at: string }
+        Insert: { id?: string; order_id: string; sender_id: string; body: string; created_at?: string }
+        Update: { id?: string; order_id?: string; sender_id?: string; body?: string; created_at?: string }
+        Relationships: []
+      }
       order_status_events: {
         Row: {
           created_at: string
@@ -75,6 +81,10 @@ export type Database = {
           total_fare: number
           updated_at: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          accepted_at: string | null
+          picked_up_at: string | null
+          in_transit_at: string | null
+          delivered_at: string | null
         }
         Insert: {
           base_fare: number
@@ -200,6 +210,7 @@ export type Database = {
           is_active: boolean
           location_is_demo: boolean
           location_updated_at: string | null
+          plate_number: string | null
           user_id: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }
@@ -278,6 +289,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_stats: { Args: never; Returns: Json }
+      get_order_customer: { Args: { p_order_id: string }; Returns: { customer_id: string; full_name: string }[] }
+      get_order_rider: {
+        Args: { p_order_id: string }
+        Returns: { rider_id: string; full_name: string; phone: string | null; vehicle_type: Database["public"]["Enums"]["vehicle_type"]; plate_number: string | null }[]
+      }
+      set_rider_plate: { Args: { p_plate: string }; Returns: undefined }
+      update_order_status: {
+        Args: { p_order_id: string; p_status: Database["public"]["Enums"]["order_status"] }
+        Returns: Database["public"]["Enums"]["order_status"]
+      }
       accept_order: { Args: { p_order_id: string }; Returns: string }
       create_order: {
         Args: {
