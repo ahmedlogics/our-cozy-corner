@@ -86,6 +86,13 @@ function RouteVisual() {
   );
 }
 
+const JOURNEY = [
+  { icon: Package, title: "Request" },
+  { icon: Bike, title: "Rider accepts" },
+  { icon: MapPin, title: "Pickup" },
+  { icon: ShieldCheck, title: "Delivered" },
+];
+
 const STEPS = [
   { icon: MapPin, title: "Book your pickup", text: "Set pickup and drop-off inside the city, choose a priority and confirm." },
   { icon: Radar, title: "A nearby rider accepts", text: "Riders see orders ranked by distance and urgency, then accept the one that fits." },
@@ -139,6 +146,24 @@ export function Landing() {
             </Reveal>
           </div>
           <Reveal delay={200}><RouteVisual /></Reveal>
+        </section>
+
+        <section aria-label="Delivery journey" className="mx-auto max-w-6xl px-6">
+          <Reveal>
+            <div className="glass relative overflow-hidden rounded-3xl p-6 md:p-8">
+              <div className="absolute inset-x-8 top-[3.25rem] hidden h-0.5 rounded-full bg-border md:block" aria-hidden>
+                <div className="animate-story h-full rounded-full bg-gradient-signal" />
+              </div>
+              <ol className="relative grid gap-6 md:grid-cols-4">
+                {JOURNEY.map((j, i) => (
+                  <li key={j.title} className="flex items-start gap-3 md:flex-col md:items-center md:text-center">
+                    <span className="lift grid size-11 shrink-0 place-items-center rounded-2xl border border-border bg-card text-primary" style={{ transitionDelay: `${i * 60}ms` }}><j.icon className="size-5" /></span>
+                    <div><p className="text-xs text-muted-foreground">Step {i + 1}</p><p className="font-semibold">{j.title}</p></div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </Reveal>
         </section>
 
         <section id="how" className="mx-auto max-w-6xl scroll-mt-24 px-6 py-24">
