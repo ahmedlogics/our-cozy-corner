@@ -37,7 +37,13 @@ export const Route = createFileRoute("/_authenticated/rider/jobs/$orderId")({
     if (!d.order) throw notFound();
   },
   pendingComponent: () => <DashboardShell role="Rider" title="Delivery" items={riderNav("jobs")}><CardSkeleton rows={5} /></DashboardShell>,
-  errorComponent: ({ error }) => <div className="p-8"><ErrorState description={(error as Error).message} /></div>,
+  errorComponent: ({ error }) => (
+    <DashboardShell role="Rider" title="Delivery" items={riderNav("jobs")}>
+      <div className="space-y-4">
+        <ErrorState description={(error as Error).message} />
+      </div>
+    </DashboardShell>
+  ),
   notFoundComponent: () => (
     <DashboardShell role="Rider" title="Delivery" items={riderNav("jobs")}>
       <ErrorState title="Order not found" description="This order isn't assigned to you." />

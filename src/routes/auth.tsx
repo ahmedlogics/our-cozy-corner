@@ -306,8 +306,9 @@ function AuthPage() {
               type="email"
               placeholder="name@example.com"
               required
+              autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.replace(/\s+/g, ""))}
             />
           </div>
 

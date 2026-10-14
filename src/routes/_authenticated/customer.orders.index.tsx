@@ -14,13 +14,14 @@ type Tab = "all" | "active" | "delivered";
 
 function CustomerOrdersErrorComponent({ error }: { error: unknown }) {
   const router = useRouter();
+  const msg = (error as Error)?.message ?? String(error);
   return (
-    <div className="p-8">
-      <ErrorState description={(error as Error).message} />
-      <Button className="mt-4" onClick={() => router.invalidate()}>
-        Retry
-      </Button>
-    </div>
+    <DashboardShell role="Customer" title="My orders" items={customerNav("orders")}>
+      <div className="space-y-4">
+        <ErrorState description={msg} />
+        <Button onClick={() => router.invalidate()}>Retry</Button>
+      </div>
+    </DashboardShell>
   );
 }
 

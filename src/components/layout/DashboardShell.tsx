@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Menu, LogIn, LogOut, type LucideIcon } from "lucide-react";
+import { Menu, LogIn, LogOut, Moon, Sun, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -13,14 +13,64 @@ export interface NavItem {
   to?: "/customer" | "/customer/book" | "/customer/orders" | "/rider" | "/rider/jobs" | "/admin" | "/admin/orders" | "/admin/riders" | "/admin/customers" | "/admin/priority";
 }
 
-const itemCls = "press relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-primary before:absolute before:left-0 before:top-1/2 before:h-0 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-all before:duration-300 aria-[current=page]:before:h-5";
+const itemCls =
+  "relative flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors text-muted-foreground hover:text-foreground aria-[current=page]:font-bold aria-[current=page]:text-foreground after:absolute after:bottom-0 after:left-3 after:right-3 after:h-[2px] after:bg-transparent aria-[current=page]:after:bg-primary";
+
+function ThemeToggle() {
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light") {
+      setIsDark(false);
+      document.documentElement.classList.remove("dark");
+    } else {
+      setIsDark(true);
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  const toggle = () => {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={toggle}
+      className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 rounded-lg border border-border/70"
+      title={isDark ? "Switch to Warm Sandstone Mode" : "Switch to Rich Obsidian Mode"}
+    >
+      {isDark ? (
+        <>
+          <Moon className="size-3.5 text-primary" />
+          <span className="hidden sm:inline">Obsidian</span>
+        </>
+      ) : (
+        <>
+          <Sun className="size-3.5 text-primary" />
+          <span className="hidden sm:inline">Warm Sand</span>
+        </>
+      )}
+    </Button>
+  );
+}
 
 function SideNav({ items, role, onNav }: { items: NavItem[]; role: string; onNav?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-6 p-5">
       <Logo />
       <p className="px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{role}</p>
-      <nav className="flex flex-col gap-1" aria-label={`${role} navigation`}>
+      <nav className="flex flex-col gap-1.5" aria-label={`${role} navigation`}>
         {items.map((it) =>
           it.to ? (
             <Link
@@ -41,10 +91,10 @@ function SideNav({ items, role, onNav }: { items: NavItem[]; role: string; onNav
           ),
         )}
       </nav>
-      <div className="mt-auto border-t border-sidebar-border pt-4">
+      <div className="mt-auto border-t border-border pt-4">
         <div className="flex items-center justify-between px-2 text-[11px] text-muted-foreground">
           <span>Karachi Express</span>
-          <span className="rounded bg-secondary/80 px-1.5 py-0.5 font-mono text-[10px] uppercase">{role}</span>
+          <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] uppercase font-semibold text-foreground">{role}</span>
         </div>
       </div>
     </div>
@@ -63,12 +113,12 @@ export function DashboardShell({ role, title, items, children }: { role: string;
     navigate({ to: "/auth" });
   };
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
+    <div className="flex min-h-screen bg-background text-foreground transition-colors duration-200">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-background lg:block">
         <SideNav items={items} role={role} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md md:px-8">
           <div className="flex items-center gap-2">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
@@ -79,16 +129,17 @@ export function DashboardShell({ role, title, items, children }: { role: string;
                 <SideNav items={items} role={role} onNav={() => setOpen(false)} />
               </SheetContent>
             </Sheet>
-            <h1 className="text-lg font-semibold">{title}</h1>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">{title}</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
             <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground sm:inline-flex">
               <span className="size-2 rounded-full bg-primary" />
               {role} Portal
             </span>
             {email ? (
               <>
-                <span className="hidden max-w-48 truncate text-sm text-muted-foreground sm:inline">{email}</span>
+                <span className="hidden max-w-44 truncate text-xs text-muted-foreground sm:inline">{email}</span>
                 <Button size="sm" variant="ghost" onClick={signOut}><LogOut /> Sign out</Button>
               </>
             ) : (

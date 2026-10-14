@@ -14,13 +14,14 @@ import { DispatchRadar } from "@/components/shared/DispatchRadar";
 
 function OrderDetailErrorComponent({ error }: { error: unknown }) {
   const router = useRouter();
+  const msg = (error as Error)?.message ?? String(error);
   return (
-    <div className="p-8">
-      <ErrorState description={(error as Error).message} />
-      <Button className="mt-4" onClick={() => router.invalidate()}>
-        Retry
-      </Button>
-    </div>
+    <DashboardShell role="Customer" title="Order details" items={customerNav("orders")}>
+      <div className="space-y-4">
+        <ErrorState description={msg} />
+        <Button onClick={() => router.invalidate()}>Retry</Button>
+      </div>
+    </DashboardShell>
   );
 }
 

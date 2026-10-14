@@ -35,7 +35,13 @@ export const Route = createFileRoute("/_authenticated/rider/jobs")({
       <CardSkeleton rows={3} />
     </DashboardShell>
   ),
-  errorComponent: ({ error }) => <div className="p-8"><ErrorState description={(error as Error).message} /></div>,
+  errorComponent: ({ error }) => (
+    <DashboardShell role="Rider" title="My jobs" items={riderNav("jobs")}>
+      <div className="space-y-4">
+        <ErrorState description={(error as Error).message} />
+      </div>
+    </DashboardShell>
+  ),
   component: MyJobs,
 });
 

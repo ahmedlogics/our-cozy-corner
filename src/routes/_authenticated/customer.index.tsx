@@ -10,13 +10,35 @@ import { ACTIVE_STATUSES, myOrdersQuery, profileQuery } from "@/features/orders/
 
 function CustomerErrorComponent({ error }: { error: unknown }) {
   const router = useRouter();
+  const msg = (error as Error)?.message ?? String(error);
+  const isSchemaMissing = msg.includes("schema cache") || msg.includes("public.orders") || msg.includes("PGRST205");
+
   return (
-    <div className="p-8">
-      <ErrorState description={(error as Error).message} />
-      <Button className="mt-4" onClick={() => router.invalidate()}>
-        Retry
-      </Button>
-    </div>
+    <DashboardShell role="Customer" title="Overview" items={customerNav("overview")}>
+      <div className="space-y-4">
+        {isSchemaMissing ? (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-amber-200">
+            <h3 className="text-lg font-semibold text-amber-300">Database Setup Required</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your Supabase project is connected, but the database tables have not been created yet in your project.
+            </p>
+            <div className="mt-4 rounded-xl bg-background/60 p-4 font-mono text-xs text-foreground">
+              Open your Supabase SQL Editor and run the script in:
+              <br />
+              <strong className="text-primary">sql/0000_FULL_SETUP.sql</strong>
+            </div>
+            <Button className="mt-4" onClick={() => router.invalidate()}>
+              I Have Run the SQL — Retry
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <ErrorState description={msg} />
+            <Button onClick={() => router.invalidate()}>Retry</Button>
+          </div>
+        )}
+      </div>
+    </DashboardShell>
   );
 }
 
