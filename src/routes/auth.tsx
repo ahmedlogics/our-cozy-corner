@@ -338,11 +338,24 @@ function AuthPage() {
           {mode === "in" ? "New here? Create an account" : "Already have an account? Sign in"}
         </button>
 
-        <div className="mt-6 border-t border-border pt-4 text-center">
+        <div className="mt-6 border-t border-border pt-4 text-center space-y-2">
           <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <Shield className="size-3.5 text-primary" />
             <span>Staff or Administrator? Sign in above to enter the Dispatch Console.</span>
           </p>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("in");
+                setEmail("admin@tmms.pk");
+                setPassword("Admin123!");
+              }}
+              className="rounded-lg border border-border bg-card/60 px-2.5 py-1 text-[11px] font-mono text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+            >
+              Fill Admin: admin@tmms.pk
+            </button>
+          </div>
         </div>
       </div>
     </div>
