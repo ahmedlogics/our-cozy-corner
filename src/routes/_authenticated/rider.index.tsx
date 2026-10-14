@@ -7,6 +7,7 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, DashCard, EmptyState, ErrorState } from "@/components/shared/States";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { VehicleIcon } from "@/components/shared/OrderBits";
+import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { riderNav } from "@/features/rider/nav";
 import { PRIORITY_LABEL, type Priority } from "@/features/priority/priority";
@@ -123,7 +124,7 @@ function Onboarding({ name }: { name: string }) {
 
 /* ---------------- Nearby pickups ---------------- */
 
-function Nearby({ rider }: { rider: NonNullable<Awaited<ReturnType<typeof riderProfileQuery.queryFn>>>["rider"] }) {
+function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles"]["Row"] }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [radius, setRadius] = useState<number>(5);
