@@ -52,23 +52,40 @@ function AuthPage() {
       navigate({ to: redirect as "/customer" });
       return;
     }
-    if (!userId) {
-      navigate({ to: (role === "rider" ? "/rider" : "/customer") as "/customer" });
+
+    // If user explicitly registered/signed in under the Courier Rider tab:
+    if (role === "rider") {
+      if (userId) {
+        try {
+          await supabase.rpc("register_rider", { p_vehicle: vehicle });
+          if (plate.trim()) {
+            await supabase.rpc("set_rider_plate", { p_plate: plate.trim() });
+          }
+        } catch {
+          // ignore if already registered
+        }
+      }
+      navigate({ to: "/rider" });
       return;
     }
-    try {
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-      const roleList = roles?.map((r) => r.role) ?? [];
-      if (roleList.includes("admin")) {
-        navigate({ to: "/admin" });
-      } else if (roleList.includes("rider")) {
-        navigate({ to: "/rider" });
-      } else {
-        navigate({ to: "/customer" });
+
+    if (userId) {
+      try {
+        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+        const roleList = roles?.map((r) => r.role) ?? [];
+        if (roleList.includes("admin")) {
+          navigate({ to: "/admin" });
+          return;
+        } else if (roleList.includes("rider")) {
+          navigate({ to: "/rider" });
+          return;
+        }
+      } catch {
+        // fallback to customer
       }
-    } catch {
-      navigate({ to: role === "rider" ? "/rider" : "/customer" });
     }
+
+    navigate({ to: "/customer" });
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -109,6 +126,16 @@ function AuthPage() {
         if (error) throw error;
 
         if (data.session) {
+          if (role === "rider") {
+            try {
+              await supabase.rpc("register_rider", { p_vehicle: vehicle });
+              if (plate.trim()) {
+                await supabase.rpc("set_rider_plate", { p_plate: plate.trim() });
+              }
+            } catch {
+              // will be prompted by rider onboarding if needed
+            }
+          }
           toast.success(`Account created! Welcome to LogiPulse, ${name.split(" ")[0]}.`);
           await navigateAfterAuth(data.user?.id);
         } else {

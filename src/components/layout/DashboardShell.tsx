@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Menu, LogIn, LogOut, type LucideIcon } from "lucide-react";
+import { Menu, LogIn, LogOut, Bike, Package, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -41,6 +41,25 @@ function SideNav({ items, role, onNav }: { items: NavItem[]; role: string; onNav
           ),
         )}
       </nav>
+      <div className="mt-auto border-t border-sidebar-border pt-4">
+        {role === "Customer" ? (
+          <Link
+            to="/rider"
+            onClick={onNav}
+            className="flex items-center gap-2.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+          >
+            <Bike className="size-4" /> Switch to Rider Portal
+          </Link>
+        ) : role === "Rider" ? (
+          <Link
+            to="/customer"
+            onClick={onNav}
+            className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Package className="size-4" /> Customer Dashboard
+          </Link>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -76,6 +95,19 @@ export function DashboardShell({ role, title, items, children }: { role: string;
             <h1 className="text-lg font-semibold">{title}</h1>
           </div>
           <div className="flex items-center gap-3">
+            {role === "Customer" ? (
+              <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex border-primary/40 text-primary hover:bg-primary/10">
+                <Link to="/rider">
+                  <Bike className="mr-1.5 size-4" /> Rider Dashboard
+                </Link>
+              </Button>
+            ) : role === "Rider" ? (
+              <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex text-muted-foreground hover:text-foreground">
+                <Link to="/customer">
+                  <Package className="mr-1.5 size-4" /> Customer View
+                </Link>
+              </Button>
+            ) : null}
             {email ? (
               <>
                 <span className="hidden max-w-48 truncate text-sm text-muted-foreground sm:inline">{email}</span>
