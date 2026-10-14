@@ -50,6 +50,7 @@ export const myOrdersQuery = queryOptions({
     if (error) throw error;
     return data;
   },
+  refetchInterval: 20000,
 });
 
 export const orderQuery = (id: string) =>
@@ -64,7 +65,41 @@ export const orderQuery = (id: string) =>
       if (ev.error) throw ev.error;
       return { order: o.data, events: ev.data };
     },
+    refetchInterval: 15000,
   });
+
+export const orderRiderQuery = (id: string) =>
+  queryOptions({
+    queryKey: ["orders", id, "rider"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_order_rider", { p_order_id: id });
+      if (error) throw new Error(friendlyError(error));
+      return data?.[0] ?? null;
+    },
+  });
+
+export const orderCustomerQuery = (id: string) =>
+  queryOptions({
+    queryKey: ["orders", id, "customer"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_order_customer", { p_order_id: id });
+      if (error) throw new Error(friendlyError(error));
+      return data?.[0] ?? null;
+    },
+  });
+
+/** Next valid lifecycle step a rider may perform, or null when none. */
+export const NEXT_STATUS: Partial<Record<OrderStatus, { status: OrderStatus; label: string }>> = {
+  ACCEPTED: { status: "PICKED_UP", label: "Confirm pickup" },
+  PICKED_UP: { status: "IN_TRANSIT", label: "Start transit" },
+  IN_TRANSIT: { status: "DELIVERED", label: "Mark delivered" },
+};
+
+export async function updateOrderStatus(id: string, status: OrderStatus) {
+  const { data, error } = await supabase.rpc("update_order_status", { p_order_id: id, p_status: status });
+  if (error) throw new Error(friendlyError(error));
+  return data;
+}
 
 export const serviceAreasQuery = queryOptions({
   queryKey: ["service_areas"],

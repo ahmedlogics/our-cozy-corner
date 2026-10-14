@@ -8,7 +8,7 @@ export type Message = Database["public"]["Tables"]["messages"]["Row"];
 
 /** Chat rules: readable once a rider is assigned; sendable only during active delivery. */
 export const CHAT_SEND_STATUSES: OrderStatus[] = ["ACCEPTED", "PICKED_UP", "IN_TRANSIT"];
-export const canReadChat = (status: OrderStatus, riderId: string | null) => !!riderId && status !== "PENDING" && status !== "CANCELLED" || (!!riderId && status === "DELIVERED");
+export const canReadChat = (status: OrderStatus, riderId: string | null) => !!riderId && status !== "PENDING" && status !== "CANCELLED";
 export const canSendChat = (status: OrderStatus, riderId: string | null) => !!riderId && CHAT_SEND_STATUSES.includes(status);
 
 export const messagesQuery = (orderId: string) =>
