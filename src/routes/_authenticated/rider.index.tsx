@@ -168,8 +168,8 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
     try {
       await acceptOrder(id);
       await qc.invalidateQueries({ queryKey: ["rider"] });
-      toast.success("Order accepted — find it under My jobs.");
-      navigate({ to: "/rider/jobs" });
+      toast.success("Order accepted — chat with the customer is now open.");
+      navigate({ to: "/rider/jobs/$orderId", params: { orderId: id } });
     } catch (err) {
       toast.error(friendlyError(err));
       qc.invalidateQueries({ queryKey: ["rider", "available"] });
