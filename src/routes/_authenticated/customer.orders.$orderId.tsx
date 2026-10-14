@@ -1,13 +1,15 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, MessageSquareLock, User, CheckCircle2 } from "lucide-react";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { ArrowLeft, MapPin, User, CheckCircle2 } from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, DashCard, ErrorState } from "@/components/shared/States";
-import { CareTag, FareReceipt, ProgressBar, StatusBadge, StatusTimeline } from "@/components/shared/OrderBits";
+import { CareTag, FareReceipt, ProgressBar, StatusBadge, StatusTimeline, VehicleIcon } from "@/components/shared/OrderBits";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
+import { ChatPanel } from "@/components/shared/ChatPanel";
 import { Button } from "@/components/ui/button";
 import { customerNav } from "@/features/customer/nav";
-import { orderQuery } from "@/features/orders/orders";
+import { orderQuery, orderRiderQuery, profileQuery } from "@/features/orders/orders";
+import { useOrdersRealtime } from "@/features/orders/realtime";
 
 export const Route = createFileRoute("/_authenticated/customer/orders/$orderId")({
   validateSearch: (s: Record<string, unknown>): { created?: boolean } => (s["created"] ? { created: true } : {}),
@@ -44,8 +46,10 @@ function OrderDetail() {
   const { orderId } = Route.useParams();
   const { created } = Route.useSearch();
   const { data } = useSuspenseQuery(orderQuery(orderId));
+  useOrdersRealtime([["orders"]]);
   const o = data.order!;
-  const chatOpen = o.rider_id && o.status !== "PENDING" && o.status !== "CANCELLED";
+  const rider = useQuery({ ...orderRiderQuery(orderId), enabled: !!o.rider_id });
+  const me = useQuery(profileQuery);
   return (
     <DashboardShell role="Customer" title="Order details" items={customerNav("orders")}>
       <Link to="/customer/orders" search={{ tab: "all" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> All orders</Link>
@@ -55,7 +59,7 @@ function OrderDetail() {
           <div><p className="font-semibold">Booking confirmed</p><p className="text-sm text-muted-foreground">We're finding a rider near your pickup point.</p></div>
         </div>
       )}
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+      <section className="animate-enter rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={o.status} /><PriorityBadge priority={o.priority} />{o.handle_with_care && <CareTag />}
           <span className="ml-auto font-mono text-xs text-muted-foreground">#{o.id.slice(0, 8).toUpperCase()}</span>
@@ -64,22 +68,38 @@ function OrderDetail() {
       </section>
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
+          <DashCard title="Tracking"><StatusTimeline order={o} events={data.events} /></DashCard>
+          <DashCard title="Chat with your rider">
+            <ChatPanel orderId={o.id} status={o.status} riderId={o.rider_id} meId={me.data?.id ?? ""} otherName={rider.data?.full_name ?? "Your rider"} />
+          </DashCard>
           <DashCard title="Route">
             <div className="space-y-4 text-sm">
-              <div className="flex gap-3"><MapPin className="mt-0.5 size-4 text-primary" /><div><p className="font-medium">Pickup</p><p>{o.pickup_address}</p><p className="font-mono text-xs text-muted-foreground">{o.pickup_lat}, {o.pickup_lng}</p></div></div>
-              <div className="flex gap-3"><MapPin className="mt-0.5 size-4 text-accent" /><div><p className="font-medium">Drop-off</p><p>{o.dropoff_address}</p><p className="font-mono text-xs text-muted-foreground">{o.dropoff_lat}, {o.dropoff_lng}</p></div></div>
+              <div className="flex gap-3"><MapPin className="mt-0.5 size-4 text-primary" /><div><p className="font-medium">Pickup</p><p>{o.pickup_address}</p></div></div>
+              <div className="flex gap-3"><MapPin className="mt-0.5 size-4 text-accent" /><div><p className="font-medium">Drop-off</p><p>{o.dropoff_address}</p></div></div>
               <div className="flex gap-3"><User className="mt-0.5 size-4 text-muted-foreground" /><div><p className="font-medium">Recipient</p><p>{o.recipient_name} · {o.recipient_phone}</p><p className="text-muted-foreground">{o.parcel_description}</p></div></div>
             </div>
           </DashCard>
-          <DashCard title="Tracking"><StatusTimeline order={o} events={data.events} /></DashCard>
         </div>
         <div className="space-y-6">
+          <DashCard title="Rider">
+            {!o.rider_id ? (
+              <p className="text-sm text-muted-foreground">Waiting for a rider to accept.</p>
+            ) : rider.isLoading ? (
+              <div className="h-12 animate-pulse rounded-xl bg-secondary" />
+            ) : rider.data ? (
+              <div className="animate-enter flex items-center gap-3">
+                <div className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary"><VehicleIcon v={rider.data.vehicle_type} className="size-5" /></div>
+                <div>
+                  <p className="font-semibold">{rider.data.full_name}</p>
+                  <p className="text-xs text-muted-foreground">{rider.data.vehicle_type === "CARGO" ? "Cargo vehicle" : "Bike"}{rider.data.plate_number ? ` · ${rider.data.plate_number}` : ""}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm">A rider has accepted your order.</p>
+            )}
+          </DashCard>
           <DashCard title="Fare receipt">
             <FareReceipt distanceKm={o.distance_km} vehicle={o.vehicle_type} base={o.base_fare} distance={o.distance_fare} care={o.care_fee} total={o.total_fare} />
-          </DashCard>
-          <DashCard title="Rider">
-            {o.rider_id ? <p className="text-sm">A rider has accepted your order.</p> : <p className="text-sm text-muted-foreground">Waiting for a rider to accept.</p>}
-            <Button className="mt-4 w-full" variant="glass" disabled={!chatOpen}><MessageSquareLock /> {chatOpen ? "Open chat" : "Chat opens after acceptance"}</Button>
           </DashCard>
         </div>
       </div>
