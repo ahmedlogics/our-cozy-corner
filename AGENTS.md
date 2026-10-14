@@ -13,3 +13,4 @@
 - Feature logic lives in `src/features/<domain>` (auth, customer, rider, orders, locations, pricing, priority, chat, admin); UI in `src/components/{shared,landing,layout,ui}` — keeps UI separate from services/DB.
 - Supabase (user's own external project) is the only database; never add Lovable Cloud or mock data.
 - Dashboard routes share `DashboardShell`; avoid scroll effects on dashboards (performance).
+- Database changes ship as idempotent SQL files in `sql/` that the owner runs in their Supabase SQL editor — `drizzle/migrations` is read-only and no migration tool reaches the external project.
