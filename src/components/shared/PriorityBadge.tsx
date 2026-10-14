@@ -5,7 +5,7 @@ import { PRIORITY_LABEL, type Priority } from "@/features/priority/priority";
 const styles: Record<Priority, string> = {
   NORMAL: "bg-secondary text-secondary-foreground",
   HIGH: "bg-warning/15 text-warning ring-1 ring-warning/40",
-  URGENT: "bg-destructive/15 text-destructive ring-1 ring-destructive/50 uppercase tracking-wide",
+  URGENT: "bg-destructive/15 text-destructive ring-1 ring-destructive/50 uppercase tracking-wide animate-urgent",
 };
 const icons = { NORMAL: Minus, HIGH: ArrowUp, URGENT: AlertTriangle } as const;
 
