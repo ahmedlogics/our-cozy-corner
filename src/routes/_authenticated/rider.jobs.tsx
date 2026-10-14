@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Bike, MapPin, PackageCheck, ShieldCheck } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { MapPin, PackageCheck, ShieldCheck } from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, DashCard, EmptyState, ErrorState } from "@/components/shared/States";
 import { PriorityBadge, StatusBadge, VehicleIcon, ProgressBar } from "@/components/shared/OrderBits";
@@ -50,7 +50,7 @@ function JobList({ title, orders, empty }: { title: string; orders: Order[]; emp
     <section>
       <h2 className="mb-3 text-base font-semibold">{title}</h2>
       {orders.length === 0 ? (
-        empty && <EmptyState icon={PackageCheck} title={empty.title} description={empty.description} action={<Button asChild variant="hero"><a href="/rider">Find pickups</a></Button>} />
+        empty && <EmptyState icon={PackageCheck} title={empty.title} description={empty.description} action={<Button asChild variant="hero"><Link to="/rider">Find pickups</Link></Button>} />
       ) : (
         <ul className="grid gap-3">
           {orders.map((o, i) => <JobCard key={o.id} order={o} index={i} />)}
