@@ -13,7 +13,7 @@ export interface NavItem {
   to?: "/customer" | "/customer/book" | "/customer/orders" | "/rider" | "/rider/jobs" | "/admin" | "/admin/orders" | "/admin/riders" | "/admin/customers" | "/admin/priority";
 }
 
-const itemCls = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-primary";
+const itemCls = "press relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-primary before:absolute before:left-0 before:top-1/2 before:h-0 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-all before:duration-300 aria-[current=page]:before:h-5";
 
 function SideNav({ items, role, onNav }: { items: NavItem[]; role: string; onNav?: () => void }) {
   return (

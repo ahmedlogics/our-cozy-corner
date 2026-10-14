@@ -170,3 +170,36 @@
 .map-pin-muted { background: var(--muted-foreground); }
 .leaflet-container { background: var(--secondary); font-family: inherit; }
 @media (prefers-reduced-motion: reduce) { .animate-enter, .animate-pop { animation: none; } }
+
+/* Phase 7 — motion & semantic tokens */
+:root {
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 600ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --status-pending: var(--warning);
+  --status-active: var(--accent);
+  --status-done: var(--success);
+  --priority-high: var(--warning);
+  --priority-urgent: var(--destructive);
+}
+@utility press {
+  transition: transform var(--duration-fast) var(--ease-out-expo), box-shadow var(--duration-base) ease, background-color var(--duration-base) ease, filter var(--duration-base) ease;
+  &:active:not(:disabled) { transform: scale(0.97); }
+}
+@utility lift {
+  transition: transform var(--duration-base) var(--ease-out-expo), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
+  &:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); border-color: color-mix(in oklab, var(--primary) 35%, transparent); }
+}
+@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@utility shimmer {
+  background-image: linear-gradient(90deg, var(--muted) 0%, color-mix(in oklab, var(--muted-foreground) 18%, var(--muted)) 50%, var(--muted) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+@keyframes urgent-pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--priority-urgent) 45%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
+@utility animate-urgent { animation: urgent-pulse 2.2s ease-in-out infinite; }
+@keyframes story-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@utility animate-story { transform-origin: left; animation: story-fill 8s var(--ease-out-expo) infinite; }
+@media (prefers-reduced-motion: reduce) { .shimmer, .animate-urgent, .animate-story { animation: none; } .press:active, .lift:hover { transform: none; } }
