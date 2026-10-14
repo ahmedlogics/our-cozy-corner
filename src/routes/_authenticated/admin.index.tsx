@@ -1,12 +1,17 @@
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Activity, AlertTriangle, ArrowUp, Bike, CheckCircle2, Clock, Minus, Package, Users } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Activity, AlertTriangle, ArrowUp, Bike, CheckCircle2, Clock, Minus, Package, Users, Truck, DollarSign, Save } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { DashCard, ErrorState } from "@/components/shared/States";
 import { AdminTableSkeleton, StatCard } from "@/components/shared/AdminBits";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { adminNav, adminStatsQuery } from "@/features/admin/admin";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { adminNav, adminStatsQuery, pricingRulesQuery, updatePricingRule } from "@/features/admin/admin";
 import { useOrdersRealtime } from "@/features/orders/realtime";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -23,6 +28,169 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   }),
   component: Overview,
 });
+
+function PricingRulesEditor() {
+  const qc = useQueryClient();
+  const q = useQuery(pricingRulesQuery);
+  const [bikeBase, setBikeBase] = useState("100");
+  const [bikePerKm, setBikePerKm] = useState("25");
+  const [bikeCare, setBikeCare] = useState("50");
+
+  const [cargoBase, setCargoBase] = useState("300");
+  const [cargoPerKm, setCargoPerKm] = useState("50");
+  const [cargoCare, setCargoCare] = useState("100");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (q.data) {
+      const bike = q.data.find((r) => r.vehicle_type === "BIKE");
+      if (bike) {
+        setBikeBase(String(bike.base_fare));
+        setBikePerKm(String(bike.per_km_rate));
+        setBikeCare(String(bike.care_fee));
+      }
+      const cargo = q.data.find((r) => r.vehicle_type === "CARGO");
+      if (cargo) {
+        setCargoBase(String(cargo.base_fare));
+        setCargoPerKm(String(cargo.per_km_rate));
+        setCargoCare(String(cargo.care_fee));
+      }
+    }
+  }, [q.data]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updatePricingRule({
+        vehicle_type: "BIKE",
+        base_fare: Number(bikeBase) || 100,
+        per_km_rate: Number(bikePerKm) || 25,
+        care_fee: Number(bikeCare) || 50,
+      });
+      await updatePricingRule({
+        vehicle_type: "CARGO",
+        base_fare: Number(cargoBase) || 300,
+        per_km_rate: Number(cargoPerKm) || 50,
+        care_fee: Number(cargoCare) || 100,
+      });
+      await qc.invalidateQueries({ queryKey: ["admin", "pricing_rules"] });
+      toast.success("Pricing rules updated in Supabase!");
+    } catch (err) {
+      toast.error((err as Error).message || "Failed to update pricing rules");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <DashCard
+      title="Pricing Rules Configuration"
+      description="Manage active base rates, per-kilometer pricing, and handle with care fees for Bike and Cargo delivery in PKR."
+    >
+      <div className="grid gap-6 md:grid-cols-2 pt-2">
+        {/* Bike Pricing */}
+        <div className="rounded-xl border border-[#D9C5B2] bg-[#FAF6F0] p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 place-items-center rounded-lg bg-[#B4532A] text-[#FAF6F0]">
+              <Bike className="size-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-[#2B211B]">Motorbike Delivery</p>
+              <p className="text-[11px] text-[#7C6F64]">Small parcels, documents, express courier</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <div className="space-y-1">
+              <Label htmlFor="bike-base" className="text-[11px] font-semibold text-[#2B211B]">Base Fare (Rs)</Label>
+              <Input
+                id="bike-base"
+                type="number"
+                value={bikeBase}
+                onChange={(e) => setBikeBase(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bike-km" className="text-[11px] font-semibold text-[#2B211B]">Rate/KM (Rs)</Label>
+              <Input
+                id="bike-km"
+                type="number"
+                value={bikePerKm}
+                onChange={(e) => setBikePerKm(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bike-care" className="text-[11px] font-semibold text-[#2B211B]">Care Fee (Rs)</Label>
+              <Input
+                id="bike-care"
+                type="number"
+                value={bikeCare}
+                onChange={(e) => setBikeCare(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Cargo Pricing */}
+        <div className="rounded-xl border border-[#D9C5B2] bg-[#FAF6F0] p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 place-items-center rounded-lg bg-[#2B211B] text-[#FAF6F0]">
+              <Truck className="size-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-[#2B211B]">Cargo Delivery</p>
+              <p className="text-[11px] text-[#7C6F64]">Heavy boxes, appliances, loader available (Rs. 100)</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <div className="space-y-1">
+              <Label htmlFor="cargo-base" className="text-[11px] font-semibold text-[#2B211B]">Base Fare (Rs)</Label>
+              <Input
+                id="cargo-base"
+                type="number"
+                value={cargoBase}
+                onChange={(e) => setCargoBase(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="cargo-km" className="text-[11px] font-semibold text-[#2B211B]">Rate/KM (Rs)</Label>
+              <Input
+                id="cargo-km"
+                type="number"
+                value={cargoPerKm}
+                onChange={(e) => setCargoPerKm(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="cargo-care" className="text-[11px] font-semibold text-[#2B211B]">Care Fee (Rs)</Label>
+              <Input
+                id="cargo-care"
+                type="number"
+                value={cargoCare}
+                onChange={(e) => setCargoCare(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between border-t border-[#D9C5B2]/60 pt-3">
+        <p className="text-xs text-[#7C6F64]">
+          Updates will be stored in Supabase <code className="font-mono text-[#2B211B]">pricing_rules</code> table and take effect immediately.
+        </p>
+        <Button size="sm" variant="hero" onClick={handleSave} disabled={saving} className="text-xs">
+          <Save className="size-3.5 mr-1.5" />
+          {saving ? "Saving..." : "Save Pricing Rules"}
+        </Button>
+      </div>
+    </DashCard>
+  );
+}
 
 function Overview() {
   useOrdersRealtime([["admin"]]);
@@ -59,6 +227,10 @@ function Overview() {
                 <StatCard index={3} label="Riders" value={s.total_riders} icon={Bike} />
               </div>
             </section>
+            
+            {/* Administrator Pricing Rules Management */}
+            <PricingRulesEditor />
+
             <DashCard title="Orders per day" description="Last 14 days">
               <ChartContainer config={{ orders: { label: "Orders", color: "var(--primary)" } }} className="h-64 w-full">
                 <BarChart data={s.daily.map((d) => ({ ...d, label: new Date(d.day).toLocaleDateString("en-PK", { day: "numeric", month: "short" }) }))}>

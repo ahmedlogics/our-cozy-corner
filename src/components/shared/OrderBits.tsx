@@ -55,21 +55,47 @@ export function OrderCard({ order, index = 0 }: { order: Order; index?: number }
   );
 }
 
-export function FareReceipt({ distanceKm, vehicle, base, distance, care, total, perKm }: { distanceKm: number | string; vehicle: string; base: number | string; distance: number | string; care: number | string; total: number | string; perKm?: number | string | undefined }) {
+export function FareReceipt({
+  distanceKm,
+  vehicle,
+  base,
+  distance,
+  care,
+  loader,
+  total,
+  perKm,
+}: {
+  distanceKm: number | string;
+  vehicle: string;
+  base: number | string;
+  distance: number | string;
+  care: number | string;
+  loader?: number | string | undefined;
+  total: number | string;
+  perKm?: number | string | undefined;
+}) {
   const Row = ({ k, v, muted }: { k: string; v: string; muted?: boolean }) => (
-    <div className={cn("flex justify-between py-1.5 text-sm", muted && "text-muted-foreground")}><span>{k}</span><span className="tabular-nums">{v}</span></div>
+    <div className={cn("flex justify-between py-1.5 text-sm", muted ? "text-muted-foreground" : "text-foreground")}>
+      <span>{k}</span>
+      <span className="tabular-nums font-mono">{v}</span>
+    </div>
   );
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-4 font-mono">
-      <Row k="Vehicle" v={vehicle} muted />
-      <Row k="Straight-line distance" v={`${Number(distanceKm).toFixed(2)} km`} muted />
-      <div className="my-2 border-t border-dashed border-border" />
+    <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
+      <h4 className="text-sm font-bold tracking-tight text-foreground mb-2">Delivery Fare Breakdown</h4>
+      <Row k="Vehicle" v={vehicle === "CARGO" ? "Cargo Van / Truck" : "Motorbike"} muted />
+      <Row k="Direct Distance" v={`${Number(distanceKm).toFixed(2)} km`} muted />
+      <div className="my-2.5 border-t border-border/70" />
       <Row k="Base fare" v={formatPKR(base)} />
       <Row k={perKm ? `Distance fare (${formatPKR(perKm)}/km)` : "Distance fare"} v={formatPKR(distance)} />
-      <Row k="Handle With Care" v={Number(care) > 0 ? formatPKR(care) : "—"} />
-      <div className="my-2 border-t border-dashed border-border" />
-      <div className="flex justify-between text-base font-bold"><span>Total</span><span className="tabular-nums">{formatPKR(total)}</span></div>
-      <p className="mt-2 font-sans text-xs text-muted-foreground">Distance is measured point-to-point, not by road.</p>
+      {Number(care) > 0 && <Row k="Handle With Care Fee" v={formatPKR(care)} />}
+      {Number(loader) > 0 && <Row k="Loader / Labour Fee" v={formatPKR(loader!)} />}
+      <div className="my-2.5 border-t border-border" />
+      <div className="flex justify-between text-lg font-bold text-foreground">
+        <span>Total Fare</span>
+        <span className="text-primary tabular-nums font-mono font-extrabold">{formatPKR(total)}</span>
+      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">Point-to-point calculation verified via Karachi service rules.</p>
     </div>
   );
 }
