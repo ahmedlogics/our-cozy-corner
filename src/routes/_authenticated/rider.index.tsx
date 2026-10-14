@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { isUserRider } from "@/features/auth/roles";
 import { useQuery, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { Bike, Crosshair, FlaskConical, Loader2, MapPin, PackageOpen, ShieldCheck, Truck } from "lucide-react";
+import { Bike, Crosshair, Loader2, MapPin, Navigation, PackageOpen, ShieldCheck, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, DashCard, EmptyState, ErrorState } from "@/components/shared/States";
@@ -16,14 +16,7 @@ import { useOrdersRealtime } from "@/features/orders/realtime";
 import { availableOrdersQuery, riderProfileQuery, acceptOrder, saveLocation, registerRider, RADII, type SortMode } from "@/features/rider/rider";
 import { friendlyError } from "@/features/orders/orders";
 import { cn } from "@/lib/utils";
-
-/** Labeled demo spots inside the Karachi service area — never presented as the rider's real position. */
-const DEMO_SPOTS = [
-  { name: "Saddar", lat: 24.856, lng: 67.031 },
-  { name: "Clifton", lat: 24.8138, lng: 67.0299 },
-  { name: "Gulshan-e-Iqbal", lat: 24.92, lng: 67.099 },
-  { name: "North Nazimabad", lat: 24.9425, lng: 67.04 },
-] as const;
+import { findNearestKarachiArea } from "@/features/locations/karachi-areas";
 
 function RiderErrorComponent({ error }: { error: unknown }) {
   const router = useRouter();
@@ -151,7 +144,6 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
   const [priority, setPriority] = useState<Priority | null>(null);
   const [sort, setSort] = useState<SortMode>("nearest");
   const [geoState, setGeoState] = useState<"idle" | "asking" | "denied">("idle");
-  const [savingSpot, setSavingSpot] = useState<string | null>(null);
 
   const hasLocation = rider.current_lat !== null && rider.current_lng !== null;
   const locKey = `${rider.current_lat},${rider.current_lng},${rider.location_updated_at ?? ""}`;
@@ -162,25 +154,47 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
     refetchInterval: 30_000,
   });
 
-  const save = async (lat: number, lng: number, demo: boolean, label?: string) => {
-    if (demo) setSavingSpot(label ?? null);
+  const save = async (lat: number, lng: number) => {
     try {
-      await saveLocation(lat, lng, demo);
+      await saveLocation(lat, lng, false);
       await qc.invalidateQueries({ queryKey: ["rider"] });
     } catch (err) {
       toast.error(friendlyError(err));
-    } finally {
-      setSavingSpot(null);
     }
   };
+
+  // Automatically acquire real device GPS in the background on mount
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        save(+p.coords.latitude.toFixed(6), +p.coords.longitude.toFixed(6));
+      },
+      () => {
+        // Fallback default if rider has never saved coordinates before
+        if (!hasLocation) {
+          save(24.856, 67.031);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const useMyLocation = () => {
     if (!("geolocation" in navigator)) return setGeoState("denied");
     setGeoState("asking");
     navigator.geolocation.getCurrentPosition(
-      (p) => save(+p.coords.latitude.toFixed(6), +p.coords.longitude.toFixed(6), false).then(() => setGeoState("idle")),
-      () => setGeoState("denied"),
-      { enableHighAccuracy: true, timeout: 10000 },
+      (p) =>
+        save(+p.coords.latitude.toFixed(6), +p.coords.longitude.toFixed(6)).then(() => {
+          setGeoState("idle");
+          toast.success("Location updated from device GPS");
+        }),
+      () => {
+        setGeoState("denied");
+        toast.error("Location permission denied in browser");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
@@ -196,48 +210,46 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
     }
   };
 
+  const nearestArea = hasLocation
+    ? findNearestKarachiArea({ lat: rider.current_lat!, lng: rider.current_lng! })
+    : null;
+  const areaName = nearestArea?.name ?? "Karachi Central Hub";
+
   return (
     <DashboardShell role="Rider" title="Nearby pickups" items={riderNav("nearby")}>
-      {/* Location card */}
-      <DashCard title="Your location" description="Nearby pickups are ranked by real distance from this point.">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          {hasLocation ? (
-            <p className="flex items-center gap-2 text-sm">
-              <MapPin className="size-4 text-primary" />
-              <span className="font-mono tabular-nums">{rider.current_lat!.toFixed(5)}, {rider.current_lng!.toFixed(5)}</span>
-              <span className="text-muted-foreground">· updated {timeAgo(rider.location_updated_at)}</span>
-              {rider.location_is_demo && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning">
-                  <FlaskConical className="size-3" /> Demo location
-                </span>
-              )}
+      {/* Real-time Courier Status & Area Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft">
+        <div className="flex items-center gap-3">
+          <div className="relative flex size-3 items-center justify-center">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-foreground">
+                {areaName}, Karachi
+              </p>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-500">
+                <Navigation className="size-3" /> Live GPS Active
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Nearby pickups are automatically ranked by real distance from your position
             </p>
-          ) : (
-            <p className="text-sm text-muted-foreground">No location set yet — pick one below to see pickups.</p>
-          )}
-          <Button size="sm" variant="outline" onClick={useMyLocation} disabled={geoState === "asking"}>
-            {geoState === "asking" ? <Loader2 className="animate-spin" /> : <Crosshair />} Use my current location
-          </Button>
-        </div>
-        {geoState === "denied" && <p className="mt-2 text-sm text-destructive">Location access was blocked — allow it in your browser, or use a demo spot below.</p>}
-        <div className="mt-4 border-t border-border pt-4">
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground"><FlaskConical className="size-3.5" /> Demo location — pretend you're here</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {DEMO_SPOTS.map((s) => (
-              <Button
-                key={s.name}
-                type="button"
-                size="sm"
-                variant={rider.location_is_demo && rider.current_lat === s.lat ? "default" : "secondary"}
-                disabled={savingSpot !== null}
-                onClick={() => save(s.lat, s.lng, true, s.name)}
-              >
-                {savingSpot === s.name && <Loader2 className="animate-spin" />} {s.name}
-              </Button>
-            ))}
           </div>
         </div>
-      </DashCard>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          onClick={useMyLocation}
+          disabled={geoState === "asking"}
+        >
+          {geoState === "asking" ? <Loader2 className="size-3.5 animate-spin" /> : <Crosshair className="size-3.5 text-primary" />}
+          {geoState === "asking" ? "Acquiring GPS..." : "Update Location"}
+        </Button>
+      </div>
 
       {/* Filters */}
       <DashCard title="Filter pickups" description={`Showing ${rider.vehicle_type === "CARGO" ? "cargo" : "bike"}-compatible orders only.`}>
@@ -300,7 +312,7 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold tracking-wide text-foreground">
-                        #{o.id.slice(0, 8).toUpperCase()}
+                        Order #{o.id.slice(0, 8).toUpperCase()}
                       </span>
                       <span className="text-muted-foreground">·</span>
                       <span className="font-semibold text-primary">
