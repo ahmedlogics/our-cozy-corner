@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/shared/Logo";
@@ -69,7 +69,7 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-surface px-6 py-10">
       <div className="glass animate-enter w-full max-w-md rounded-3xl p-8 shadow-soft">
-        <Link to="/"><Logo /></Link>
+        <Logo />
         <h1 className="mt-8 text-2xl font-bold">{mode === "in" ? "Welcome back" : "Create your account"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Book and track deliveries across Karachi.</p>
         <Button variant="glass" className="mt-6 w-full" onClick={google} type="button">Continue with Google</Button>

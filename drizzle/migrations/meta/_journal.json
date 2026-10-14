@@ -15,6 +15,20 @@
       "when": 1791974729508,
       "tag": "0001_rider_discovery",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791976208816,
+      "tag": "0002_logipulse_core_idempotent",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791976244082,
+      "tag": "0003_seed_service_area_and_pricing",
+      "breakpoints": true
     }
   ]
 }
