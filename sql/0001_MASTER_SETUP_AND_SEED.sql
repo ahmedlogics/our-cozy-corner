@@ -338,6 +338,7 @@ BEGIN
 END $$;
 
 -- Create Order (with Day 2 Priority Support)
+-- Create Order (with Day 2 Priority Support and optional parcel description)
 CREATE OR REPLACE FUNCTION public.create_order(
   p_pickup_address text,
   p_pickup_lat double precision,
@@ -347,9 +348,9 @@ CREATE OR REPLACE FUNCTION public.create_order(
   p_dropoff_lng double precision,
   p_recipient_name text,
   p_recipient_phone text,
-  p_parcel_description text,
-  p_vehicle public.vehicle_type,
-  p_care boolean,
+  p_parcel_description text DEFAULT 'Standard Delivery Package',
+  p_vehicle public.vehicle_type DEFAULT 'BIKE',
+  p_care boolean DEFAULT false,
   p_priority public.order_priority DEFAULT 'NORMAL'
 )
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -358,6 +359,7 @@ DECLARE
   q jsonb;
   new_id uuid;
   v_priority public.order_priority;
+  v_desc text;
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'Please sign in to book' USING ERRCODE = '28000'; END IF;
   IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = uid AND is_active) THEN
@@ -366,9 +368,9 @@ BEGIN
     RAISE EXCEPTION 'Enter both pickup and drop-off addresses' USING ERRCODE = '22023'; END IF;
   IF length(trim(coalesce(p_recipient_name, ''))) < 2 THEN RAISE EXCEPTION 'Enter the recipient name' USING ERRCODE = '22023'; END IF;
   IF coalesce(p_recipient_phone, '') !~ '^\+?[0-9 \-]{10,16}$' THEN RAISE EXCEPTION 'Enter a valid recipient phone' USING ERRCODE = '22023'; END IF;
-  IF length(trim(coalesce(p_parcel_description, ''))) < 2 THEN RAISE EXCEPTION 'Describe the parcel' USING ERRCODE = '22023'; END IF;
   IF p_pickup_lat = p_dropoff_lat AND p_pickup_lng = p_dropoff_lng THEN RAISE EXCEPTION 'Pickup and drop-off cannot be the same point' USING ERRCODE = '22023'; END IF;
 
+  v_desc := COALESCE(NULLIF(trim(coalesce(p_parcel_description, '')), ''), 'Standard Delivery Package');
   v_priority := COALESCE(p_priority, 'NORMAL'::public.order_priority);
   q := public.quote_order(p_pickup_lat, p_pickup_lng, p_dropoff_lat, p_dropoff_lng, p_vehicle, coalesce(p_care, false));
 
@@ -384,7 +386,7 @@ BEGIN
     uid, NULL, (q->>'service_area_id')::uuid,
     trim(p_pickup_address), p_pickup_lat, p_pickup_lng,
     trim(p_dropoff_address), p_dropoff_lat, p_dropoff_lng,
-    trim(p_recipient_name), trim(p_recipient_phone), trim(p_parcel_description),
+    trim(p_recipient_name), trim(p_recipient_phone), v_desc,
     p_vehicle, coalesce(p_care, false),
     (q->>'distance_km')::numeric, (q->>'base_fare')::numeric, (q->>'distance_fare')::numeric, (q->>'care_fee')::numeric, (q->>'total_fare')::numeric,
     'PENDING', v_priority
@@ -397,8 +399,34 @@ BEGIN
   RETURN new_id;
 END $$;
 
-REVOKE EXECUTE ON FUNCTION public.create_order FROM anon, public;
-GRANT EXECUTE ON FUNCTION public.create_order TO authenticated;
+-- 11-argument overload for backwards compatibility with earlier clients
+CREATE OR REPLACE FUNCTION public.create_order(
+  p_pickup_address text,
+  p_pickup_lat double precision,
+  p_pickup_lng double precision,
+  p_dropoff_address text,
+  p_dropoff_lat double precision,
+  p_dropoff_lng double precision,
+  p_recipient_name text,
+  p_recipient_phone text,
+  p_parcel_description text,
+  p_vehicle public.vehicle_type,
+  p_care boolean
+)
+RETURNS uuid LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+  SELECT public.create_order(
+    p_pickup_address, p_pickup_lat, p_pickup_lng,
+    p_dropoff_address, p_dropoff_lat, p_dropoff_lng,
+    p_recipient_name, p_recipient_phone, p_parcel_description,
+    p_vehicle, p_care, 'NORMAL'::public.order_priority
+  );
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.create_order(text, double precision, double precision, text, double precision, double precision, text, text, text, public.vehicle_type, boolean, public.order_priority) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.create_order(text, double precision, double precision, text, double precision, double precision, text, text, text, public.vehicle_type, boolean, public.order_priority) TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.create_order(text, double precision, double precision, text, double precision, double precision, text, text, text, public.vehicle_type, boolean) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.create_order(text, double precision, double precision, text, double precision, double precision, text, text, text, public.vehicle_type, boolean) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.quote_order TO authenticated;
 
 -- ----------------------------------------------------------------------------
@@ -812,6 +840,17 @@ BEGIN
   VALUES (v_user_id, p_full_name, p_phone, true)
   ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, phone = EXCLUDED.phone, is_active = true;
 
+  -- Ensure auth identity exists so GoTrue password login succeeds
+  INSERT INTO auth.identities (
+    id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+  ) VALUES (
+    v_user_id, v_user_id,
+    jsonb_build_object('sub', v_user_id::text, 'email', lower(p_email)),
+    'email', lower(p_email), now(), now(), now()
+  )
+  ON CONFLICT (provider, provider_id) DO UPDATE
+    SET identity_data = EXCLUDED.identity_data, updated_at = now();
+
   -- Ensure admin role is granted
   INSERT INTO public.user_roles (user_id, role)
   VALUES (v_user_id, 'admin'::public.app_role)
@@ -820,12 +859,19 @@ BEGIN
   RAISE NOTICE 'Admin provisioned: % (Password: %)', p_email, p_password;
 END $$;
 
--- Seed both requested admin credentials:
--- 1) admin@tmms.pk / Admin123!
-SELECT public._seed_admin_account('admin@tmms.pk', 'Admin123!', 'TMMS Dispatch Admin', '+92 300 1234567');
-
--- 2) admin@logipulse.com / Admin@LogiPulse2026!
+-- Seed verified admin credentials:
+-- Primary: admin@logipulse.com / Admin@LogiPulse2026!
 SELECT public._seed_admin_account('admin@logipulse.com', 'Admin@LogiPulse2026!', 'LogiPulse Lead Admin', '+92 300 0000000');
+
+-- Secondary: admin@tmms.com / Admin123!
+SELECT public._seed_admin_account('admin@tmms.com', 'Admin123!', 'TMMS Dispatch Admin', '+92 300 1234567');
+
+-- Also automatically promote the logged-in owner account (m.ahmedraza1527@gmail.com) to admin:
+INSERT INTO public.user_roles (user_id, role)
+SELECT id, 'admin'::public.app_role
+FROM auth.users
+WHERE lower(email) IN ('m.ahmedraza1527@gmail.com', 'ahmed.studies15@gmail.com')
+ON CONFLICT (user_id, role) DO NOTHING;
 
 -- ----------------------------------------------------------------------------
 -- 9. REALTIME PUBLICATION REPLICATION
@@ -844,8 +890,8 @@ END $$;
 
 -- ============================================================================
 -- SETUP COMPLETE!
--- You can now sign in immediately with:
---   Email:    admin@tmms.pk
---   Password: Admin123!
---   (or:      admin@logipulse.com / Admin@LogiPulse2026!)
+-- Admin Accounts Ready:
+--   1. Email: admin@logipulse.com   Password: Admin@LogiPulse2026!
+--   2. Email: admin@tmms.com        Password: Admin123!
+--   3. Personal account (m.ahmedraza1527@gmail.com) is also granted Admin!
 -- ============================================================================

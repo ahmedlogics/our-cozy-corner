@@ -367,7 +367,7 @@ function Book() {
     dropoff: dropoff!,
     recipient_name: rName,
     recipient_phone: rPhone,
-    parcel_description: parcel,
+    parcel_description: parcel.trim() || "Standard Delivery Package",
     parcel_weight_kg: Number(weight) || 1,
     vehicle,
     care,
@@ -390,7 +390,6 @@ function Book() {
     if (s === 1) {
       if (rName.trim().length < 2) e["rName"] = "Enter the recipient's name.";
       if (!/^\+?[0-9 -]{10,16}$/.test(rPhone.trim())) e["rPhone"] = "Enter a valid phone, e.g. 0300 1234567.";
-      if (parcel.trim().length < 2) e["parcel"] = "Describe what you're sending.";
       const numWeight = Number(weight);
       if (!weight.trim() || isNaN(numWeight) || numWeight <= 0) {
         e["weight"] = "Mandatory: Enter parcel weight in kg (must be greater than 0).";
@@ -782,16 +781,15 @@ function Book() {
 
             <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="pd" className="font-semibold text-foreground">
-                Parcel Description <span className="text-destructive">*</span>
+                Parcel Description <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
               </Label>
               <Textarea
                 id="pd"
                 value={parcel}
                 onChange={(e) => setParcel(e.target.value)}
                 rows={2}
-                placeholder="Describe items (e.g. Electronics, clothes carton, documents)..."
+                placeholder="Optional notes about parcel contents, handling, etc."
               />
-              <Err k="parcel" />
             </div>
 
             {/* Mandatory Weight Entry */}

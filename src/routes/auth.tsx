@@ -349,12 +349,12 @@ function AuthPage() {
               type="button"
               onClick={() => {
                 setMode("in");
-                setEmail("admin@tmms.pk");
-                setPassword("Admin123!");
+                setEmail("admin@logipulse.com");
+                setPassword("Admin@LogiPulse2026!");
               }}
               className="rounded-lg border border-border bg-card/60 px-2.5 py-1 text-[11px] font-mono text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
             >
-              Fill Admin: admin@tmms.pk
+              Fill Admin: admin@logipulse.com
             </button>
           </div>
         </div>

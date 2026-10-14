@@ -210,7 +210,8 @@ export async function fetchQuote(b: BookingInput): Promise<Quote> {
 }
 
 export async function createOrder(b: BookingInput): Promise<string> {
-  const fullDesc = `${b.parcel_description.trim()} [Weight: ${b.parcel_weight_kg} kg${b.loader ? " | Loader required" : ""}]`;
+  const desc = b.parcel_description?.trim() || "Standard Delivery Package";
+  const fullDesc = `${desc} [Weight: ${b.parcel_weight_kg || 1} kg${b.loader ? " | Loader required" : ""}]`;
   const payload: Record<string, unknown> = {
     p_pickup_address: b.pickup_address,
     p_pickup_lat: b.pickup.lat,
@@ -227,8 +228,19 @@ export async function createOrder(b: BookingInput): Promise<string> {
   if (b.priority) {
     payload["p_priority"] = b.priority;
   }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await supabase.rpc("create_order", payload as any);
+  let { data, error } = await supabase.rpc("create_order", payload as any);
+
+  // If the remote database has the 11-argument create_order version without p_priority, retry without it
+  if (error && error.message.includes("schema cache") && payload["p_priority"]) {
+    delete payload["p_priority"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const retry = await supabase.rpc("create_order", payload as any);
+    data = retry.data;
+    error = retry.error;
+  }
+
   if (error || !data) throw new Error(friendlyError(error ?? "Booking failed"));
   return data as string;
 }
