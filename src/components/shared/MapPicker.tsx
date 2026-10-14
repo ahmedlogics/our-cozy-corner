@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import type { Map as LMap, Marker, Circle } from "leaflet";
+import { cn } from "@/lib/utils";
 
 export interface Pt {
   lat: number;
@@ -24,6 +25,7 @@ export interface MapPickerProps {
   center: Pt;
   area?: { center: Pt; radiusKm: number } | undefined;
   label: string;
+  className?: string;
 }
 
 /** Interactive map picker with dual pins, smooth panning, and service area boundary */
@@ -40,6 +42,7 @@ export function MapPicker({
   center,
   area,
   label,
+  className,
 }: MapPickerProps) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<LMap | null>(null);
@@ -163,7 +166,7 @@ export function MapPicker({
       ref={el}
       role="application"
       aria-label={label}
-      className="relative h-80 w-full overflow-hidden rounded-2xl border border-border shadow-soft md:h-96"
+      className={cn("relative h-80 w-full overflow-hidden rounded-2xl border border-border shadow-soft md:h-96", className)}
     />
   );
 }

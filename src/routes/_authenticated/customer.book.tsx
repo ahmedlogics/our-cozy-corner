@@ -184,8 +184,7 @@ function AddressSearchBox({
     try {
       const matches = await searchKarachiLocations(value, 1);
       if (matches[0]) {
-        // Pin coordinates without overwriting user's typed address
-        onSelectPoint({ lat: matches[0].lat, lng: matches[0].lng });
+        onSelectPoint({ lat: matches[0].lat, lng: matches[0].lng }, matches[0].name);
         setShowDropdown(false);
         toast.success(`Pinned location on map`);
       } else {
@@ -199,72 +198,91 @@ function AddressSearchBox({
   const nearest = point ? findNearestKarachiArea(point) : null;
 
   return (
-    <div ref={containerRef} className={cn("space-y-2 rounded-2xl border p-4 transition-all", isActive ? "border-primary/60 bg-primary/5 shadow-soft" : "border-border bg-card")}>
+    <div
+      ref={containerRef}
+      className={cn(
+        "relative space-y-2 rounded-2xl border p-3.5 transition-all",
+        isActive
+          ? "border-primary/70 bg-primary/[0.04] ring-1 ring-primary/25 shadow-soft"
+          : "border-border bg-card/70 hover:border-border/80"
+      )}
+    >
+      {/* Header with Title and Pin Status */}
       <div className="flex items-center justify-between">
-        <label htmlFor={id} className="flex items-center gap-1.5 text-sm font-semibold cursor-pointer" onClick={onFocusInput}>
-          <MapPin className={cn("size-4", tone === "primary" ? "text-primary" : "text-accent")} />
+        <label
+          htmlFor={id}
+          className="flex items-center gap-1.5 text-xs font-bold text-foreground cursor-pointer"
+          onClick={onFocusInput}
+        >
+          {tone === "primary" ? (
+            <MapPin className="size-3.5 text-primary" />
+          ) : (
+            <Navigation className="size-3.5 text-accent" />
+          )}
           <span>{label}</span>
         </label>
         {point ? (
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
-              isOutside ? "bg-destructive/15 text-destructive" : "bg-emerald-500/15 text-emerald-400"
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+              isOutside ? "bg-destructive/15 text-destructive" : "bg-emerald-500/15 text-emerald-500"
             )}
           >
-            {isOutside ? "Outside Area" : "✓ Pinned on map"}
+            {isOutside ? "Outside Service Area" : "✓ Pinned on map"}
           </span>
         ) : (
-          <span className="text-xs text-amber-400/90 font-medium">Pin required on map</span>
+          <span className="text-[11px] font-medium text-amber-500">Pin required</span>
         )}
       </div>
 
+      {/* Input Group with Search/Pin Button */}
       <div className="relative">
-        <Textarea
-          id={id}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => {
-            onFocusInput();
-            if (results.length > 0) setShowDropdown(true);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              locateNow();
-            }
-          }}
-          rows={2}
-          className="pr-22 text-sm"
-        />
-
-        <div className="absolute right-2 top-2">
+        <div className="flex items-center gap-1.5">
+          <div className="relative flex-1">
+            <Input
+              id={id}
+              type="text"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              onFocus={() => {
+                onFocusInput();
+                if (results.length > 0) setShowDropdown(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  locateNow();
+                }
+              }}
+              placeholder={placeholder}
+              className="h-9 text-xs rounded-xl pr-2"
+            />
+          </div>
           <Button
             type="button"
             size="sm"
-            variant="glass"
-            className="h-7 gap-1 px-2.5 text-xs shadow-xs"
+            variant="outline"
+            className="h-9 shrink-0 gap-1 rounded-xl px-2.5 text-xs font-semibold"
             disabled={searching || !value.trim()}
             onClick={locateNow}
             title="Search this address and pin on map"
           >
             {searching ? <Loader2 className="size-3 animate-spin" /> : <Search className="size-3 text-primary" />}
-            Find on map
+            Find & Pin
           </Button>
         </div>
 
         {/* Live Search Autocomplete Dropdown */}
         {showDropdown && results.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-56 overflow-auto rounded-xl border border-border bg-popover p-1 shadow-lg backdrop-blur-md">
-            <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Karachi Locations matching &quot;{value.slice(0, 20)}&quot;:
+          <div className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-52 overflow-auto rounded-xl border border-border bg-popover/95 p-1.5 shadow-xl backdrop-blur-md">
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Karachi matching locations:
             </div>
             {results.map((r, idx) => (
               <button
                 key={`${r.name}-${idx}`}
                 type="button"
-                className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition-colors hover:bg-accent/40"
+                className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-secondary"
                 onClick={() => {
                   onSelectPoint({ lat: r.lat, lng: r.lng }, r.name);
                   setShowDropdown(false);
@@ -273,27 +291,29 @@ function AddressSearchBox({
                 <MapPin className={cn("mt-0.5 size-3.5 shrink-0", tone === "primary" ? "text-primary" : "text-accent")} />
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-foreground truncate">{r.name}</p>
-                  {r.detail && <p className="text-[11px] text-muted-foreground truncate">{r.detail}</p>}
+                  {r.detail && <p className="text-[10px] text-muted-foreground truncate">{r.detail}</p>}
                 </div>
-                <span className="shrink-0 text-[11px] text-primary font-medium">Pin on map &gt;</span>
+                <span className="shrink-0 text-[10px] text-primary font-medium">Pin &gt;</span>
               </button>
             ))}
           </div>
         )}
       </div>
 
+      {/* Pinned Coordinates & Quick Area Indicator */}
       {point && (
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1.5 font-medium text-foreground">
-            <span className="size-2 rounded-full bg-emerald-500" />
-            {nearest ? `Area: ${nearest.name}` : "Location pinned on map"}
+        <div className="flex items-center justify-between rounded-lg bg-secondary/35 px-2.5 py-1 text-[11px]">
+          <span className="flex items-center gap-1.5 text-foreground truncate">
+            <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />
+            <span className="font-medium">{nearest ? nearest.name : "Location pinned"}</span>
+            <span className="text-[10px] text-muted-foreground font-mono">({point.lat.toFixed(4)}, {point.lng.toFixed(4)})</span>
           </span>
           <button
             type="button"
             onClick={onFocusInput}
-            className="text-[11px] text-primary hover:underline font-medium"
+            className="text-[10px] text-primary hover:underline font-semibold shrink-0"
           >
-            Focus on map
+            Focus pin
           </button>
         </div>
       )}
@@ -464,6 +484,34 @@ function Book() {
     }
   };
 
+  const swapLocations = () => {
+    const pPt = pickup;
+    const pAddr = pickupAddr;
+    setPickup(dropoff);
+    setPickupAddr(dropAddr);
+    setDropoff(pPt);
+    setDropAddr(pAddr);
+    toast.success("Swapped pickup and destination");
+  };
+
+  const selectQuickHub = (areaName: string) => {
+    const found = KARACHI_AREAS.find((a) => a.name.toLowerCase() === areaName.toLowerCase());
+    if (!found) return;
+    const pt = { lat: found.lat, lng: found.lng };
+    if (which === "pickup") {
+      setPickup(pt);
+      setPickupAddr(`${found.name}, Karachi`);
+      setWhich("dropoff");
+      toast.success(`Pickup set to ${found.name}`);
+    } else {
+      setDropoff(pt);
+      setDropAddr(`${found.name}, Karachi`);
+      toast.success(`Destination set to ${found.name}`);
+    }
+  };
+
+  const routeDistanceKm = pickup && dropoff ? haversineKm(pickup, dropoff) : null;
+
   // Filtered areas for quick-select
   const filteredAreas = KARACHI_AREAS.filter((a) => {
     const matchesCategory = areaCategory === "All" || a.category === areaCategory;
@@ -514,238 +562,273 @@ function Book() {
 
       <div key={step} className="animate-enter rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6 text-card-foreground">
         {step === 0 && (
-          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            {/* Left: Map & Area Selector */}
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="inline-flex rounded-xl border border-border bg-secondary/40 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setWhich("pickup")}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                      which === "pickup" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <MapPin className="size-3.5" />
-                    <span>1. Set Pickup</span>
-                    {pickup && <span className="size-2 rounded-full bg-emerald-400" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWhich("dropoff")}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                      which === "dropoff" ? "bg-accent text-accent-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <Navigation className="size-3.5" />
-                    <span>2. Set Destination</span>
-                    {dropoff && <span className="size-2 rounded-full bg-emerald-400" />}
-                  </button>
+          <div className="grid gap-6 lg:grid-cols-12 items-start">
+            {/* Left Column: Interactive Map (7 cols) */}
+            <div className="lg:col-span-7 flex flex-col space-y-3">
+              {/* Map Header Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-secondary/30 p-2.5 shadow-xs">
+                <div className="flex items-center gap-2">
+                  <div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <Navigation className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Karachi Service Map</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {which === "pickup" ? "Placing Pickup Pin (Green)" : "Placing Destination Pin (Orange)"}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <div className="inline-flex rounded-xl border border-border bg-card p-0.5 shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => setWhich("pickup")}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all",
+                        which === "pickup"
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <MapPin className="size-3" />
+                      <span>1. Pickup</span>
+                      {pickup && <span className="size-1.5 rounded-full bg-emerald-400" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWhich("dropoff")}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all",
+                        which === "dropoff"
+                          ? "bg-accent text-accent-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <Navigation className="size-3" />
+                      <span>2. Destination</span>
+                      {dropoff && <span className="size-1.5 rounded-full bg-emerald-400" />}
+                    </button>
+                  </div>
+
                   <Button
                     type="button"
                     size="sm"
-                    variant="glass"
-                    onClick={() => setShowAreaCatalog((v) => !v)}
-                    className="text-xs gap-1.5"
+                    variant="outline"
+                    onClick={askLocation}
+                    disabled={geo === "asking"}
+                    className="h-7.5 gap-1.5 px-2.5 text-xs rounded-xl"
+                    title="Detect current location with device GPS"
                   >
-                    <Compass className="size-3.5 text-primary" />
-                    <span>{showAreaCatalog ? "Hide Area List" : "Browse Karachi Hubs"}</span>
-                    <ChevronDown className={cn("size-3.5 transition-transform", showAreaCatalog && "rotate-180")} />
-                  </Button>
-
-                  <Button type="button" size="sm" variant="glass" onClick={askLocation} disabled={geo === "asking"} className="text-xs">
-                    {geo === "asking" ? <Loader2 className="animate-spin size-3.5" /> : <Crosshair className="size-3.5" />}
-                    GPS
+                    {geo === "asking" ? <Loader2 className="size-3 animate-spin" /> : <Crosshair className="size-3 text-primary" />}
+                    <span>GPS</span>
                   </Button>
                 </div>
               </div>
 
-              {/* 30+ Karachi Areas Quick Picker - Collapsible Drawer */}
-              {showAreaCatalog && (
-                <div className="animate-enter relative space-y-2.5 rounded-xl border border-border bg-card p-3.5 shadow-md">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Compass className="size-4 text-primary" />
-                      <span className="text-xs font-bold text-foreground">
-                        Select {which === "pickup" ? "Pickup" : "Drop-off"} Area ({filteredAreas.length} hubs)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="relative max-w-xs">
-                        <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          value={areaFilter}
-                          onChange={(e) => setAreaFilter(e.target.value)}
-                          placeholder="Search areas..."
-                          className="h-7 pl-8 pr-2 text-xs"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowAreaCatalog(false)}
-                        className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground font-medium"
-                      >
-                        ✕ Close
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Category Pills */}
-                  <div className="flex flex-wrap gap-1">
-                    {(["All", "Popular", "North", "Central", "South", "East", "Malir & Korangi"] as const).map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setAreaCategory(cat)}
-                        className={cn(
-                          "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors",
-                          areaCategory === cat
-                            ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        )}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Area Chips */}
-                  <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto pr-1">
-                    {filteredAreas.map((a) => {
-                      const isSelected =
-                        (which === "pickup" && pickup && Math.abs(pickup.lat - a.lat) < 0.005 && Math.abs(pickup.lng - a.lng) < 0.005) ||
-                        (which === "dropoff" && dropoff && Math.abs(dropoff.lat - a.lat) < 0.005 && Math.abs(dropoff.lng - a.lng) < 0.005);
-
-                      return (
-                        <button
-                          key={a.name}
-                          type="button"
-                          onClick={() => {
-                            const pt = { lat: a.lat, lng: a.lng };
-                            if (which === "pickup") {
-                              setPickup(pt);
-                              setPickupAddr(`${a.name}, Karachi`);
-                              setWhich("dropoff");
-                              toast.success(`Pickup set to ${a.name}`);
-                            } else {
-                              setDropoff(pt);
-                              setDropAddr(`${a.name}, Karachi`);
-                              toast.success(`Drop-off set to ${a.name}`);
-                            }
-                            setShowAreaCatalog(false);
-                          }}
-                          className={cn(
-                            "rounded-lg border px-2.5 py-1 text-xs transition-all",
-                            isSelected
-                              ? "border-primary bg-primary/20 text-primary font-bold shadow-xs"
-                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/50 hover:bg-secondary hover:text-foreground"
-                          )}
-                        >
-                          {a.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
+              {/* GPS Detected Banner */}
               {geo === "suggested" && suggested && (
-                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 p-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/10 p-2.5 text-xs">
                   <span className="text-foreground font-medium">
                     📍 Current location detected
-                    {outside(suggested) && <span className="text-destructive font-semibold"> — outside Karachi service area</span>}
+                    {outside(suggested) && <span className="text-destructive font-semibold"> — outside Karachi area</span>}
                   </span>
-                  <Button
-                    size="sm"
-                    variant="hero"
-                    className="ml-auto text-xs"
-                    onClick={() => {
-                      setPickup(suggested);
-                      const nearest = findNearestKarachiArea(suggested);
-                      if (nearest) setPickupAddr(`Near ${nearest.name}, Karachi`);
-                      setGeo("idle");
-                      setWhich("dropoff");
-                    }}
-                  >
-                    Use as Pickup
-                  </Button>
-                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => setGeo("idle")}>Dismiss</Button>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="hero"
+                      className="h-6.5 text-[11px] px-2.5"
+                      onClick={() => {
+                        setPickup(suggested);
+                        const nearest = findNearestKarachiArea(suggested);
+                        if (nearest) setPickupAddr(`Near ${nearest.name}, Karachi`);
+                        setGeo("idle");
+                        setWhich("dropoff");
+                      }}
+                    >
+                      Use as Pickup
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-6.5 text-[11px] px-2" onClick={() => setGeo("idle")}>
+                      ✕
+                    </Button>
+                  </div>
                 </div>
               )}
 
-              {geo === "denied" && (
-                <p className="rounded-xl bg-warning/10 p-2.5 text-xs text-warning">
-                  Browser location access not available — search your area below or tap on the map.
-                </p>
-              )}
+              {/* Interactive Map */}
+              <div className="relative">
+                <MapPicker
+                  label={`Map: tap to place ${which}`}
+                  center={(which === "pickup" ? pickup : dropoff) ?? (which === "dropoff" ? pickup : null) ?? center}
+                  area={areaInfo}
+                  pickup={pickup}
+                  dropoff={dropoff}
+                  activeMode={which}
+                  pickupLabel={pickupAddr || "Pickup Location"}
+                  dropoffLabel={dropAddr || "Drop-off Destination"}
+                  onChange={handleMapClick}
+                  className="h-[420px] md:h-[460px] w-full rounded-2xl border border-border shadow-soft"
+                />
+              </div>
 
-              {/* Enhanced Dual-Pin Map */}
-              <MapPicker
-                label={`Map: tap to place ${which}`}
-                center={(which === "pickup" ? pickup : dropoff) ?? (which === "dropoff" ? pickup : null) ?? center}
-                area={areaInfo}
-                pickup={pickup}
-                dropoff={dropoff}
-                activeMode={which}
-                pickupLabel={pickupAddr || "Pickup Location"}
-                dropoffLabel={dropAddr || "Drop-off Destination"}
-                onChange={handleMapClick}
-              />
-
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <p>💡 Tip: Type your area name, choose an area chip, or tap the map directly to drop pins.</p>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-primary" /> Pickup</span>
-                  <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-accent" /> Destination</span>
+              {/* Map Footer Info */}
+              <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-muted-foreground">
+                <p className="text-[11px]">💡 Tap anywhere on the map or type an area name to pin.</p>
+                <div className="flex items-center gap-3 shrink-0 text-[11px] font-medium">
+                  <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-primary" /> Pickup Pin</span>
+                  <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-accent" /> Destination Pin</span>
                 </div>
               </div>
             </div>
 
-            {/* Right: Smart Address Inputs */}
-            <div className="space-y-4">
-              <AddressSearchBox
-                id="pickup-address"
-                label="Pickup Address"
-                value={pickupAddr}
-                onChange={setPickupAddr}
-                point={pickup}
-                onSelectPoint={(pt, name) => {
-                  setPickup(pt);
-                  if (name && !pickupAddr.trim()) setPickupAddr(`${name}, Karachi`);
-                  setWhich("dropoff");
-                }}
-                tone="primary"
-                placeholder="Type area (e.g. North Karachi Sector 11, Saddar, Clifton)..."
-                error={errors["pickupAddr"] || errors["pickup"]}
-                isOutside={outside(pickup)}
-                isActive={which === "pickup"}
-                onFocusInput={() => setWhich("pickup")}
-              />
+            {/* Right Column: Route Planning Card (5 cols) */}
+            <div className="lg:col-span-5 flex flex-col justify-between space-y-3.5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-soft">
+              <div>
+                <div className="flex items-center justify-between pb-2.5 border-b border-border/60">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Delivery Route</h3>
+                    <p className="text-xs text-muted-foreground">Set your pickup and drop-off locations</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={swapLocations}
+                    disabled={!pickup && !dropoff}
+                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary/40 px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-30"
+                    title="Swap pickup and drop-off"
+                  >
+                    ⇄ Swap
+                  </button>
+                </div>
 
-              <div className="h-px bg-border my-2" />
+                {/* Connected Route Input Boxes */}
+                <div className="mt-3.5 space-y-2">
+                  <AddressSearchBox
+                    id="pickup-address"
+                    label="1. Pickup Address"
+                    value={pickupAddr}
+                    onChange={setPickupAddr}
+                    point={pickup}
+                    onSelectPoint={(pt, name) => {
+                      setPickup(pt);
+                      if (name && !pickupAddr.trim()) setPickupAddr(`${name}, Karachi`);
+                      setWhich("dropoff");
+                    }}
+                    tone="primary"
+                    placeholder="e.g. North Karachi, Saddar, Clifton..."
+                    error={errors["pickupAddr"] || errors["pickup"]}
+                    isOutside={outside(pickup)}
+                    isActive={which === "pickup"}
+                    onFocusInput={() => setWhich("pickup")}
+                  />
 
-              <AddressSearchBox
-                id="dropoff-address"
-                label="Drop-off Destination"
-                value={dropAddr}
-                onChange={setDropAddr}
-                point={dropoff}
-                onSelectPoint={(pt, name) => {
-                  setDropoff(pt);
-                  if (name && !dropAddr.trim()) setDropAddr(`${name}, Karachi`);
-                }}
-                tone="accent"
-                placeholder="Type area (e.g. Gulshan-e-Iqbal, DHA Phase 5, Jauhar)..."
-                error={errors["dropAddr"] || errors["dropoff"]}
-                isOutside={outside(dropoff)}
-                isActive={which === "dropoff"}
-                onFocusInput={() => setWhich("dropoff")}
-              />
+                  {/* Route Timeline Distance Connector */}
+                  <div className="relative py-1 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-dashed border-border" /></div>
+                    <div className="relative flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-0.5 text-[11px] text-muted-foreground shadow-2xs">
+                      {routeDistanceKm !== null ? (
+                        <span className="font-bold text-primary">
+                          📏 {Number(routeDistanceKm).toFixed(1)} km · ~{Math.max(10, Math.round(routeDistanceKm * 3.5))} mins
+                        </span>
+                      ) : (
+                        <span>Direct delivery route</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <AddressSearchBox
+                    id="dropoff-address"
+                    label="2. Drop-off Destination"
+                    value={dropAddr}
+                    onChange={setDropAddr}
+                    point={dropoff}
+                    onSelectPoint={(pt, name) => {
+                      setDropoff(pt);
+                      if (name && !dropAddr.trim()) setDropAddr(`${name}, Karachi`);
+                    }}
+                    tone="accent"
+                    placeholder="e.g. Gulshan-e-Iqbal, DHA Phase 5, Jauhar..."
+                    error={errors["dropAddr"] || errors["dropoff"]}
+                    isOutside={outside(dropoff)}
+                    isActive={which === "dropoff"}
+                    onFocusInput={() => setWhich("dropoff")}
+                  />
+                </div>
+
+                {/* Karachi Quick Hubs Selector */}
+                <div className="mt-3 space-y-1.5 rounded-xl border border-border/70 bg-secondary/20 p-2.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-muted-foreground flex items-center gap-1">
+                      <Compass className="size-3 text-primary" />
+                      Karachi Hubs (tap to set {which}):
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowAreaCatalog((v) => !v)}
+                      className="font-semibold text-primary hover:underline"
+                    >
+                      {showAreaCatalog ? "Close ✕" : "All 30+ hubs ▾"}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {["Saddar", "Clifton", "Gulshan-e-Iqbal", "North Nazimabad", "DHA Phase 5", "Bahria Town", "Korangi"].map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => selectQuickHub(name)}
+                        className="rounded-lg border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-foreground hover:border-primary/60 hover:bg-primary/10 transition-colors shadow-2xs"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Expandable 30+ areas catalog */}
+                  {showAreaCatalog && (
+                    <div className="mt-2 space-y-2 border-t border-border/60 pt-2 animate-enter">
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            value={areaFilter}
+                            onChange={(e) => setAreaFilter(e.target.value)}
+                            placeholder="Filter areas..."
+                            className="h-7 pl-7 pr-2 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex max-h-32 flex-wrap gap-1 overflow-y-auto pr-1">
+                        {filteredAreas.map((a) => (
+                          <button
+                            key={a.name}
+                            type="button"
+                            onClick={() => {
+                              selectQuickHub(a.name);
+                              setShowAreaCatalog(false);
+                            }}
+                            className="rounded-md border border-border bg-card px-2 py-0.5 text-[11px] hover:border-primary hover:bg-primary/10 transition-colors"
+                          >
+                            {a.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Step 0 CTA inside the Route Planning Card */}
+              <div className="pt-2 border-t border-border/60">
+                <Button
+                  type="button"
+                  variant="hero"
+                  className="w-full gap-2 text-xs font-bold h-10 shadow-soft"
+                  onClick={next}
+                >
+                  <span>Continue to Recipient & Parcel</span>
+                  <ArrowRight className="size-4" />
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -1063,19 +1146,19 @@ function Book() {
         )}
       </div>
 
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <Button variant="ghost" disabled={step === 0 || busy} onClick={() => setStep(step - 1)}>
-          <ArrowLeft /> Back
+          <ArrowLeft className="size-4" /> Back
         </Button>
-        {step < 2 ? (
+        {step === 1 ? (
           <Button variant="hero" onClick={next}>
-            Continue <ArrowRight />
+            Continue <ArrowRight className="size-4" />
           </Button>
-        ) : (
+        ) : step === 2 ? (
           <Button variant="hero" onClick={confirm} disabled={busy || !quote || !!quoteErr}>
-            {busy && <Loader2 className="animate-spin" />} Confirm booking
+            {busy && <Loader2 className="animate-spin size-4" />} Confirm booking
           </Button>
-        )}
+        ) : null}
       </div>
     </DashboardShell>
   );
