@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bike, Loader2, Package, Truck } from "lucide-react";
+import { Bike, Loader2, Package, Shield, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserRoleState } from "@/features/auth/roles";
 import { cn } from "@/lib/utils";
 
 type Search = { intent?: "customer" | "rider" | undefined; redirect?: string | undefined };
@@ -53,7 +54,20 @@ function AuthPage() {
       return;
     }
 
-    // If user explicitly registered/signed in under the Courier Rider tab:
+    // Resolve true database roles (admin > rider > customer)
+    const roleState = await getUserRoleState(userId);
+
+    if (roleState.isAdmin) {
+      navigate({ to: "/admin" });
+      return;
+    }
+
+    if (roleState.isRider) {
+      navigate({ to: "/rider" });
+      return;
+    }
+
+    // If new registration explicitly chose courier rider:
     if (role === "rider") {
       if (userId) {
         try {
@@ -67,22 +81,6 @@ function AuthPage() {
       }
       navigate({ to: "/rider" });
       return;
-    }
-
-    if (userId) {
-      try {
-        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-        const roleList = roles?.map((r) => r.role) ?? [];
-        if (roleList.includes("admin")) {
-          navigate({ to: "/admin" });
-          return;
-        } else if (roleList.includes("rider")) {
-          navigate({ to: "/rider" });
-          return;
-        }
-      } catch {
-        // fallback to customer
-      }
     }
 
     navigate({ to: "/customer" });
@@ -339,6 +337,13 @@ function AuthPage() {
         >
           {mode === "in" ? "New here? Create an account" : "Already have an account? Sign in"}
         </button>
+
+        <div className="mt-6 border-t border-border pt-4 text-center">
+          <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <Shield className="size-3.5 text-primary" />
+            <span>Staff or Administrator? Sign in above to enter the Dispatch Console.</span>
+          </p>
+        </div>
       </div>
     </div>
   );

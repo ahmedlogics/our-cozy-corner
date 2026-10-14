@@ -244,6 +244,7 @@ export function Landing() {
           <nav className="flex flex-wrap gap-6 text-sm text-muted-foreground" aria-label="Footer">
             {NAV.map((n) => <a key={n.href} href={n.href} className="hover:text-foreground">{n.label}</a>)}
             <Link to="/auth" className="hover:text-foreground">Sign in</Link>
+            <Link to="/admin" className="hover:text-foreground">Admin Console</Link>
           </nav>
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} LogiPulse. Within-city delivery.</p>
         </div>

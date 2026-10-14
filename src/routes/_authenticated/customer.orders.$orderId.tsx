@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { customerNav } from "@/features/customer/nav";
 import { orderQuery, orderRiderQuery, profileQuery } from "@/features/orders/orders";
 import { useOrdersRealtime } from "@/features/orders/realtime";
+import { DispatchRadar } from "@/components/shared/DispatchRadar";
 
 function OrderDetailErrorComponent({ error }: { error: unknown }) {
   const router = useRouter();
@@ -62,12 +63,19 @@ function OrderDetail() {
   return (
     <DashboardShell role="Customer" title="Order details" items={customerNav("orders")}>
       <Link to="/customer/orders" search={{ tab: "all" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> All orders</Link>
-      {created && (
+      {created && o.status !== "PENDING" && (
         <div className="animate-enter flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4">
           <CheckCircle2 className="animate-pop size-8 text-success" />
-          <div><p className="font-semibold">Booking confirmed</p><p className="text-sm text-muted-foreground">We're finding a rider near your pickup point.</p></div>
+          <div><p className="font-semibold">Rider Assigned</p><p className="text-sm text-muted-foreground">Your courier has accepted the delivery and is heading to the pickup point.</p></div>
         </div>
       )}
+
+      {o.status === "PENDING" && (
+        <div className="animate-enter">
+          <DispatchRadar order={o} />
+        </div>
+      )}
+
       <section className="animate-enter rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={o.status} /><PriorityBadge priority={o.priority} />{o.handle_with_care && <CareTag />}
@@ -90,9 +98,23 @@ function OrderDetail() {
           </DashCard>
         </div>
         <div className="space-y-6">
-          <DashCard title="Rider">
+          <DashCard title="Courier Status">
             {!o.rider_id ? (
-              <p className="text-sm text-muted-foreground">Waiting for a rider to accept.</p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-warning">
+                  <span className="relative flex size-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                    <span className="relative inline-flex size-2.5 rounded-full bg-warning" />
+                  </span>
+                  <span className="text-sm font-semibold">Broadcasting to Couriers</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Nearby courier riders within the search radius are currently receiving your pickup alert. Once a courier accepts, their vehicle details and direct live chat will unlock here.
+                </p>
+                <div className="rounded-xl border border-border/80 bg-secondary/30 p-2.5 text-[11px] text-muted-foreground">
+                  Vehicle required: <span className="font-semibold text-foreground">{o.vehicle_type === "CARGO" ? "Cargo Van / Bulk" : "Motorbike"}</span>
+                </div>
+              </div>
             ) : rider.isLoading ? (
               <div className="h-12 animate-pulse rounded-xl bg-secondary" />
             ) : rider.data ? (

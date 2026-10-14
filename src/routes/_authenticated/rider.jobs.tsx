@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { isUserRider } from "@/features/auth/roles";
 import { MapPin, PackageCheck, ShieldCheck } from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, DashCard, EmptyState, ErrorState } from "@/components/shared/States";
@@ -22,6 +23,12 @@ export const Route = createFileRoute("/_authenticated/rider/jobs")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  beforeLoad: async () => {
+    const allowed = await isUserRider();
+    if (!allowed) {
+      throw redirect({ to: "/customer" });
+    }
+  },
   loader: ({ context }) => context.queryClient.ensureQueryData(riderJobsQuery),
   pendingComponent: () => (
     <DashboardShell role="Rider" title="My jobs" items={riderNav("jobs")}>

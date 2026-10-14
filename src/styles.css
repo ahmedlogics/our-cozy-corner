@@ -201,5 +201,35 @@
 @keyframes urgent-pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--priority-urgent) 45%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
 @utility animate-urgent { animation: urgent-pulse 2.2s ease-in-out infinite; }
 @keyframes story-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@utility animate-story { transform-origin: left; animation: story-fill 8s var(--ease-out-expo) infinite; }
 @media (prefers-reduced-motion: reduce) { .shimmer, .animate-urgent, .animate-story { animation: none; } .press:active, .lift:hover { transform: none; } }
+
+/* Radar Scanner Keyframes for inDrive & Yango Dispatch Experience */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes radar-ripple {
+  0% { transform: scale(0.25); opacity: 0.9; }
+  70% { opacity: 0.35; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes radar-blip {
+  0%, 100% { transform: scale(0.85); opacity: 0.6; }
+  50% { transform: scale(1.35); opacity: 1; }
+}
+@utility animate-radar-sweep {
+  animation: radar-sweep 3.5s linear infinite;
+  transform-origin: center center;
+}
+@utility animate-radar-ripple-1 {
+  animation: radar-ripple 3.2s cubic-bezier(0.1, 0.4, 0.2, 1) infinite;
+}
+@utility animate-radar-ripple-2 {
+  animation: radar-ripple 3.2s cubic-bezier(0.1, 0.4, 0.2, 1) infinite 1.1s;
+}
+@utility animate-radar-ripple-3 {
+  animation: radar-ripple 3.2s cubic-bezier(0.1, 0.4, 0.2, 1) infinite 2.2s;
+}
+@utility animate-radar-blip {
+  animation: radar-blip 2.2s ease-in-out infinite;
+}

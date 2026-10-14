@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
+import { isUserRider } from "@/features/auth/roles";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, MapPin, Package, User, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +26,12 @@ export const Route = createFileRoute("/_authenticated/rider/jobs/$orderId")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  beforeLoad: async () => {
+    const allowed = await isUserRider();
+    if (!allowed) {
+      throw redirect({ to: "/customer" });
+    }
+  },
   loader: async ({ context, params }) => {
     const d = await context.queryClient.ensureQueryData(orderQuery(params.orderId));
     if (!d.order) throw notFound();

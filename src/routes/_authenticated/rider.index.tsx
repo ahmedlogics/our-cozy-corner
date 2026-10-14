@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
+import { isUserRider } from "@/features/auth/roles";
 import { useQuery, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { Bike, Crosshair, FlaskConical, Loader2, MapPin, PackageOpen, ShieldCheck, Truck } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +47,12 @@ export const Route = createFileRoute("/_authenticated/rider/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  beforeLoad: async () => {
+    const allowed = await isUserRider();
+    if (!allowed) {
+      throw redirect({ to: "/customer" });
+    }
+  },
   loader: ({ context }) => context.queryClient.ensureQueryData(riderProfileQuery),
   pendingComponent: () => (
     <DashboardShell role="Rider" title="Nearby pickups" items={riderNav("nearby")}>
