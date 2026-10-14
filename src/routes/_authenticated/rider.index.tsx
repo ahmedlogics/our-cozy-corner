@@ -127,6 +127,7 @@ function Onboarding({ name }: { name: string }) {
 
 function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles"]["Row"] }) {
   const qc = useQueryClient();
+  useOrdersRealtime([["rider", "available"]]);
   const navigate = useNavigate();
   const [radius, setRadius] = useState<number>(5);
   const [priority, setPriority] = useState<Priority | null>(null);
