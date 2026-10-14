@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Check, Crosshair, Loader2, MapPin, ArrowRight, ArrowLeft } from "lucide-react";
+import { Check, Crosshair, Loader2, MapPin, ArrowRight, ArrowLeft, AlertTriangle, ArrowUp, Minus } from "lucide-react";
+import { PriorityBadge } from "@/components/shared/PriorityBadge";
+import { type Priority } from "@/features/priority/priority";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { CardSkeleton, ErrorState } from "@/components/shared/States";
@@ -99,6 +101,7 @@ function Book() {
   const [parcel, setParcel] = useState("");
   const [vehicle, setVehicle] = useState<VehicleType>("BIKE");
   const [care, setCare] = useState(false);
+  const [priority, setPriority] = useState<Priority>("NORMAL");
   const [geo, setGeo] = useState<"idle" | "asking" | "suggested" | "denied">("idle");
   const [suggested, setSuggested] = useState<Pt | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -121,6 +124,7 @@ function Book() {
   const input = (): BookingInput => ({
     pickup_address: pickupAddr, pickup: pickup!, dropoff_address: dropAddr, dropoff: dropoff!,
     recipient_name: rName, recipient_phone: rPhone, parcel_description: parcel, vehicle, care,
+    priority,
   });
 
   const validate = (s: number) => {
@@ -302,6 +306,46 @@ function Book() {
                 ))}
               </div>
             </div>
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label>Delivery Priority (Day 2 Peak Hours)</Label>
+                <span className="text-xs text-muted-foreground">Sets dispatch priority for riders</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {([
+                  { value: "NORMAL", label: "Normal", desc: "Standard dispatch", icon: Minus, color: "text-muted-foreground" },
+                  { value: "HIGH", label: "High", desc: "Priority matching", icon: ArrowUp, color: "text-amber-500" },
+                  { value: "URGENT", label: "Urgent", desc: "Immediate peak priority", icon: AlertTriangle, color: "text-rose-500" },
+                ] as const).map((p) => {
+                  const Icon = p.icon;
+                  const isSelected = priority === p.value;
+                  return (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setPriority(p.value)}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "flex flex-col gap-1.5 rounded-2xl border p-3.5 text-left transition-all hover:-translate-y-0.5",
+                        isSelected
+                          ? p.value === "URGENT"
+                            ? "border-destructive bg-destructive/10 ring-1 ring-destructive/40 font-semibold"
+                            : p.value === "HIGH"
+                            ? "border-warning bg-warning/10 ring-1 ring-warning/40 font-semibold"
+                            : "border-primary bg-primary/10 ring-1 ring-primary/40 font-semibold"
+                          : "border-border hover:bg-muted/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 font-semibold text-sm">
+                        <Icon className={cn("size-4", p.color)} />
+                        <span>{p.label}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{p.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <label className="flex items-center gap-3 md:col-span-2"><Checkbox checked={care} onCheckedChange={(c) => setCare(c === true)} /><span className="text-sm">Handle With Care (fragile items, extra fee)</span></label>
           </div>
         )}
@@ -314,6 +358,10 @@ function Book() {
               <p><span className="text-muted-foreground">Drop-off:</span> {dropAddr} <span className="font-mono text-xs text-muted-foreground">({dropoff?.lat}, {dropoff?.lng})</span></p>
               <p><span className="text-muted-foreground">Recipient:</span> {rName} · {rPhone}</p>
               <p><span className="text-muted-foreground">Parcel:</span> {parcel}</p>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-muted-foreground">Priority:</span>
+                <PriorityBadge priority={priority} />
+              </div>
               <div className="flex gap-2 pt-2">
                 {(["BIKE", "CARGO"] as const).map((v) => <Button key={v} size="sm" variant={vehicle === v ? "hero" : "glass"} onClick={() => setVehicle(v)}>{v}</Button>)}
               </div>

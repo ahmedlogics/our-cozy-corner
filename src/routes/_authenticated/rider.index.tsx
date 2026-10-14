@@ -15,6 +15,7 @@ import { PRIORITY_LABEL, type Priority } from "@/features/priority/priority";
 import { useOrdersRealtime } from "@/features/orders/realtime";
 import { availableOrdersQuery, riderProfileQuery, acceptOrder, saveLocation, registerRider, RADII, type SortMode } from "@/features/rider/rider";
 import { friendlyError } from "@/features/orders/orders";
+import { cn } from "@/lib/utils";
 
 /** Labeled demo spots inside the Karachi service area — never presented as the rider's real position. */
 const DEMO_SPOTS = [
@@ -277,35 +278,75 @@ function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles
           <EmptyState icon={PackageOpen} title="No pickups nearby right now" description="New orders land here automatically — check again in a bit, or widen the radius." />
         ) : (
           <ul className="grid gap-3">
-            {orders.data!.map((o, i) => (
-              <li
-                key={o.id}
-                className="animate-enter rounded-2xl border border-border bg-card p-4 shadow-soft transition-colors hover:border-primary/40"
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><VehicleIcon v={o.vehicle_type} className="size-5" /></div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{o.pickup_address}</p>
-                      <p className="truncate text-xs text-muted-foreground">{o.parcel_summary}</p>
+            {orders.data!.map((o, i) => {
+              const isUrgent = o.priority === "URGENT";
+              const isHigh = o.priority === "HIGH";
+
+              return (
+                <li
+                  key={o.id}
+                  className={cn(
+                    "animate-enter rounded-2xl border p-4 shadow-soft transition-all hover:border-primary/50",
+                    isUrgent
+                      ? "border-rose-500/60 bg-rose-500/[0.04] ring-1 ring-rose-500/30 hover:bg-rose-500/[0.07]"
+                      : isHigh
+                      ? "border-amber-500/50 bg-amber-500/[0.04] ring-1 ring-amber-500/25 hover:bg-amber-500/[0.07]"
+                      : "border-border bg-card hover:bg-secondary/20"
+                  )}
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  {/* Rider Decision Bar: Order #Ref · Distance · Priority */}
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold tracking-wide text-foreground">
+                        #{o.id.slice(0, 8).toUpperCase()}
+                      </span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="font-semibold text-primary">
+                        {Number(o.pickup_distance_km).toFixed(1)} km away
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isUrgent && (
+                        <span className="relative flex h-2 w-2" title="Peak hours urgent dispatch">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                        </span>
+                      )}
+                      <PriorityBadge priority={o.priority} />
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold tabular-nums">{Number(o.pickup_distance_km).toFixed(1)} km</p>
-                    <p className="text-xs text-muted-foreground">to pickup</p>
+
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                        <VehicleIcon v={o.vehicle_type} className="size-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{o.pickup_address}</p>
+                        <p className="truncate text-xs text-muted-foreground">{o.parcel_summary}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold tabular-nums text-foreground">{Number(o.pickup_distance_km).toFixed(1)} km</p>
+                      <p className="text-xs text-muted-foreground">pickup distance</p>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <PriorityBadge priority={o.priority} />
-                  {o.handle_with_care && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"><ShieldCheck className="size-3" /> Handle with care</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">posted {timeAgo(o.created_at)}</span>
-                  <Button size="sm" variant="hero" className="ml-auto" onClick={() => accept(o.id)}>Accept</Button>
-                </div>
-              </li>
-            ))}
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 pt-1">
+                    {o.handle_with_care && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                        <ShieldCheck className="size-3" /> Handle with care
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground">posted {timeAgo(o.created_at)}</span>
+                    <Button size="sm" variant={isUrgent ? "default" : "hero"} className={cn("ml-auto", isUrgent && "bg-rose-600 hover:bg-rose-700 text-white")} onClick={() => accept(o.id)}>
+                      Accept job
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

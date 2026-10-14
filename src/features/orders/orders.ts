@@ -6,6 +6,7 @@ export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderEvent = Database["public"]["Tables"]["order_status_events"]["Row"];
 export type OrderStatus = Database["public"]["Enums"]["order_status"];
 export type VehicleType = Database["public"]["Enums"]["vehicle_type"];
+export type Priority = Database["public"]["Enums"]["order_priority"];
 
 export const STATUS_FLOW: OrderStatus[] = ["PENDING", "ACCEPTED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"];
 export const STATUS_LABEL: Record<OrderStatus, string> = {
@@ -131,6 +132,7 @@ export interface BookingInput {
   parcel_description: string;
   vehicle: VehicleType;
   care: boolean;
+  priority?: Priority;
 }
 
 export async function fetchQuote(b: BookingInput): Promise<Quote> {
@@ -144,12 +146,24 @@ export async function fetchQuote(b: BookingInput): Promise<Quote> {
 }
 
 export async function createOrder(b: BookingInput): Promise<string> {
-  const { data, error } = await supabase.rpc("create_order", {
-    p_pickup_address: b.pickup_address, p_pickup_lat: b.pickup.lat, p_pickup_lng: b.pickup.lng,
-    p_dropoff_address: b.dropoff_address, p_dropoff_lat: b.dropoff.lat, p_dropoff_lng: b.dropoff.lng,
-    p_recipient_name: b.recipient_name, p_recipient_phone: b.recipient_phone,
-    p_parcel_description: b.parcel_description, p_vehicle: b.vehicle, p_care: b.care,
-  });
+  const payload: Record<string, unknown> = {
+    p_pickup_address: b.pickup_address,
+    p_pickup_lat: b.pickup.lat,
+    p_pickup_lng: b.pickup.lng,
+    p_dropoff_address: b.dropoff_address,
+    p_dropoff_lat: b.dropoff.lat,
+    p_dropoff_lng: b.dropoff.lng,
+    p_recipient_name: b.recipient_name,
+    p_recipient_phone: b.recipient_phone,
+    p_parcel_description: b.parcel_description,
+    p_vehicle: b.vehicle,
+    p_care: b.care,
+  };
+  if (b.priority) {
+    payload["p_priority"] = b.priority;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await supabase.rpc("create_order", payload as any);
   if (error || !data) throw new Error(friendlyError(error ?? "Booking failed"));
   return data as string;
 }
