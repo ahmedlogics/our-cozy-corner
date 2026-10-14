@@ -4,9 +4,10 @@ import { Loader2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CountUp } from "@/components/shared/CountUp";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PRIORITIES, PRIORITY_LABEL, type Priority } from "@/features/priority/priority";
-import { canChangePriority, setOrderPriority } from "@/features/admin/admin";
+import { canChangePriority, setAccountActive, setOrderPriority } from "@/features/admin/admin";
 
 export function StatCard({ label, value, hint, icon: Icon, tone = "default", index = 0 }: { label: string; value: number; hint?: string; icon: LucideIcon; tone?: "default" | "warning" | "destructive" | "success"; index?: number }) {
   const toneCls = { default: "bg-primary/10 text-primary", warning: "bg-warning/15 text-warning", destructive: "bg-destructive/15 text-destructive", success: "bg-success/15 text-success" }[tone];
@@ -54,3 +55,27 @@ export function PrioritySelect({ orderId, priority, status, className }: { order
 export function AdminTableSkeleton({ rows = 6 }: { rows?: number }) {
   return <div className="space-y-2">{Array.from({ length: rows }, (_, i) => <div key={i} className="h-12 animate-pulse rounded-xl bg-secondary/60" />)}</div>;
 }
+
+export function AccountToggle({ userId, active }: { userId: string; active: boolean }) {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const toggle = async (v: boolean) => {
+    setBusy(true);
+    try {
+      await setAccountActive(userId, v);
+      toast.success(v ? "Account enabled" : "Account disabled");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      await qc.invalidateQueries({ queryKey: ["admin"] });
+      setBusy(false);
+    }
+  };
+  return (
+    <label className="inline-flex items-center gap-2 text-xs">
+      <Switch checked={active} disabled={busy} onCheckedChange={toggle} aria-label={active ? "Disable account" : "Enable account"} />
+      <span className={active ? "text-success" : "text-destructive"}>{active ? "Enabled" : "Disabled"}</span>
+    </label>
+  );
+}
+

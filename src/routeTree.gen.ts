@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin.orders'
+import { Route as AuthenticatedAdminRidersRouteImport } from './routes/_authenticated/admin.riders'
 import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedCustomerBookRouteImport } from './routes/_authenticated/customer.book'
 import { Route as AuthenticatedRiderIndexRouteImport } from './routes/_authenticated/rider.index'
@@ -34,6 +38,28 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminOrdersRoute =
+  AuthenticatedAdminOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRidersRoute =
+  AuthenticatedAdminRidersRouteImport.update({
+    id: '/riders',
+    path: '/riders',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedCustomerIndexRoute =
   AuthenticatedCustomerIndexRouteImport.update({
     id: '/customer/',
@@ -78,8 +104,12 @@ const AuthenticatedRiderJobsOrderIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin/orders': typeof AuthenticatedAdminOrdersRoute
+  '/admin/riders': typeof AuthenticatedAdminRidersRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
   '/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/customer/': typeof AuthenticatedCustomerIndexRoute
   '/rider/': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
@@ -89,8 +119,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin/orders': typeof AuthenticatedAdminOrdersRoute
+  '/admin/riders': typeof AuthenticatedAdminRidersRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
   '/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/customer': typeof AuthenticatedCustomerIndexRoute
   '/rider': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
@@ -102,8 +135,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
+  '/_authenticated/admin/riders': typeof AuthenticatedAdminRidersRoute
   '/_authenticated/customer/book': typeof AuthenticatedCustomerBookRoute
   '/_authenticated/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/customer/': typeof AuthenticatedCustomerIndexRoute
   '/_authenticated/rider/': typeof AuthenticatedRiderIndexRoute
   '/_authenticated/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
@@ -115,8 +152,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
+    | '/admin/orders'
+    | '/admin/riders'
     | '/customer/book'
     | '/rider/jobs'
+    | '/admin/'
     | '/customer/'
     | '/rider/'
     | '/customer/orders/$orderId'
@@ -126,8 +167,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin/orders'
+    | '/admin/riders'
     | '/customer/book'
     | '/rider/jobs'
+    | '/admin'
     | '/customer'
     | '/rider'
     | '/customer/orders/$orderId'
@@ -138,8 +182,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
+    | '/_authenticated/admin/orders'
+    | '/_authenticated/admin/riders'
     | '/_authenticated/customer/book'
     | '/_authenticated/rider/jobs'
+    | '/_authenticated/admin/'
     | '/_authenticated/customer/'
     | '/_authenticated/rider/'
     | '/_authenticated/customer/orders/$orderId'
@@ -175,6 +223,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/orders': {
+      id: '/_authenticated/admin/orders'
+      path: '/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AuthenticatedAdminOrdersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/riders': {
+      id: '/_authenticated/admin/riders'
+      path: '/riders'
+      fullPath: '/admin/riders'
+      preLoaderRoute: typeof AuthenticatedAdminRidersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/customer/': {
       id: '/_authenticated/customer/'
@@ -228,6 +304,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
+  AuthenticatedAdminRidersRoute: typeof AuthenticatedAdminRidersRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
+  AuthenticatedAdminRidersRoute: AuthenticatedAdminRidersRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRiderJobsRouteChildren {
   AuthenticatedRiderJobsOrderIdRoute: typeof AuthenticatedRiderJobsOrderIdRoute
 }
@@ -243,6 +334,7 @@ const AuthenticatedRiderJobsRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCustomerBookRoute: typeof AuthenticatedCustomerBookRoute
   AuthenticatedRiderJobsRoute: typeof AuthenticatedRiderJobsRouteWithChildren
   AuthenticatedCustomerIndexRoute: typeof AuthenticatedCustomerIndexRoute
@@ -252,6 +344,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCustomerBookRoute: AuthenticatedCustomerBookRoute,
   AuthenticatedRiderJobsRoute: AuthenticatedRiderJobsRouteWithChildren,
   AuthenticatedCustomerIndexRoute: AuthenticatedCustomerIndexRoute,

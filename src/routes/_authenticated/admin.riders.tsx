@@ -1,14 +1,11 @@
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Bike } from "lucide-react";
-import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { EmptyState, ErrorState } from "@/components/shared/States";
 import { StatusBadge, VehicleIcon } from "@/components/shared/OrderBits";
-import { AdminTableSkeleton } from "@/components/shared/AdminBits";
-import { Switch } from "@/components/ui/switch";
-import { adminNav, adminRidersQuery, orderRef, setAccountActive } from "@/features/admin/admin";
+import { AccountToggle, AdminTableSkeleton } from "@/components/shared/AdminBits";
+import { adminNav, adminRidersQuery, orderRef } from "@/features/admin/admin";
 import { useOrdersRealtime } from "@/features/orders/realtime";
 
 export const Route = createFileRoute("/_authenticated/admin/riders")({
@@ -25,29 +22,6 @@ export const Route = createFileRoute("/_authenticated/admin/riders")({
   }),
   component: Riders,
 });
-
-export function AccountToggle({ userId, active }: { userId: string; active: boolean }) {
-  const qc = useQueryClient();
-  const [busy, setBusy] = useState(false);
-  const toggle = async (v: boolean) => {
-    setBusy(true);
-    try {
-      await setAccountActive(userId, v);
-      toast.success(v ? "Account enabled" : "Account disabled");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      await qc.invalidateQueries({ queryKey: ["admin"] });
-      setBusy(false);
-    }
-  };
-  return (
-    <label className="inline-flex items-center gap-2 text-xs">
-      <Switch checked={active} disabled={busy} onCheckedChange={toggle} aria-label={active ? "Disable account" : "Enable account"} />
-      <span className={active ? "text-success" : "text-destructive"}>{active ? "Enabled" : "Disabled"}</span>
-    </label>
-  );
-}
 
 function Riders() {
   useOrdersRealtime([["admin", "riders"]]);
