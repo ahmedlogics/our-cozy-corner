@@ -11,6 +11,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { riderNav } from "@/features/rider/nav";
 import { PRIORITY_LABEL, type Priority } from "@/features/priority/priority";
+import { useOrdersRealtime } from "@/features/orders/realtime";
 import { availableOrdersQuery, riderProfileQuery, acceptOrder, saveLocation, registerRider, RADII, type SortMode } from "@/features/rider/rider";
 import { friendlyError } from "@/features/orders/orders";
 
@@ -126,6 +127,7 @@ function Onboarding({ name }: { name: string }) {
 
 function Nearby({ rider }: { rider: Database["public"]["Tables"]["rider_profiles"]["Row"] }) {
   const qc = useQueryClient();
+  useOrdersRealtime([["rider", "available"]]);
   const navigate = useNavigate();
   const [radius, setRadius] = useState<number>(5);
   const [priority, setPriority] = useState<Priority | null>(null);

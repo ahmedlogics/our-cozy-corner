@@ -289,6 +289,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      require_admin: { Args: never; Returns: undefined }
+      update_order_priority: {
+        Args: { p_order_id: string; p_priority: Database["public"]["Enums"]["order_priority"] }
+        Returns: Database["public"]["Enums"]["order_priority"]
+      }
+      admin_list_orders: {
+        Args: never
+        Returns: { id: string; created_at: string; updated_at: string; status: Database["public"]["Enums"]["order_status"]; priority: Database["public"]["Enums"]["order_priority"]; vehicle_type: Database["public"]["Enums"]["vehicle_type"]; total_fare: number; pickup_address: string; dropoff_address: string; customer_id: string; customer_name: string; rider_id: string | null; rider_name: string | null }[]
+      }
+      admin_list_riders: {
+        Args: never
+        Returns: { user_id: string; full_name: string; vehicle_type: Database["public"]["Enums"]["vehicle_type"]; plate_number: string | null; rider_active: boolean; account_active: boolean; location_updated_at: string | null; active_order_id: string | null; active_order_status: Database["public"]["Enums"]["order_status"] | null; delivered_count: number }[]
+      }
+      admin_list_customers: {
+        Args: never
+        Returns: { user_id: string; full_name: string; phone: string | null; account_active: boolean; order_count: number; last_order_at: string | null }[]
+      }
+      admin_set_account_active: { Args: { p_user_id: string; p_active: boolean }; Returns: undefined }
       admin_stats: { Args: never; Returns: Json }
       get_order_customer: { Args: { p_order_id: string }; Returns: { customer_id: string; full_name: string }[] }
       get_order_rider: {
