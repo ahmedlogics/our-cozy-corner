@@ -30,14 +30,14 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { redirect } = Route.useSearch();
+  const { intent, redirect } = Route.useSearch();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const go = () => navigate({ to: (redirect as "/customer") ?? "/customer" });
+  const go = () => navigate({ to: (redirect ?? (intent === "rider" ? "/rider" : "/customer")) as "/customer" });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
