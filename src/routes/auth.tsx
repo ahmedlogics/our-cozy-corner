@@ -171,17 +171,17 @@ function AuthPage() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-gradient-surface px-6 py-10">
-      <div className="glass animate-enter w-full max-w-md rounded-3xl p-8 shadow-soft">
+    <div className="grid min-h-screen place-items-center bg-[#F8F9F6] px-6 py-10 text-[#14283F]">
+      <div className="animate-enter w-full max-w-md rounded-3xl border border-[#E5EAE7] bg-white p-8 shadow-elevated">
         <Logo />
 
-        <div className="mt-8 flex rounded-2xl border border-border bg-secondary/30 p-1">
+        <div className="mt-8 flex rounded-2xl border border-[#E5EAE7] bg-[#F8F9F6] p-1.5">
           <button
             type="button"
             onClick={() => setRole("customer")}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-semibold transition-all",
-              role === "customer" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all",
+              role === "customer" ? "bg-[#087F75] text-white shadow-xs" : "text-[#617285] hover:text-[#14283F]"
             )}
           >
             <Package className="size-3.5" /> Customer
@@ -190,28 +190,28 @@ function AuthPage() {
             type="button"
             onClick={() => setRole("rider")}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-semibold transition-all",
-              role === "rider" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all",
+              role === "rider" ? "bg-[#087F75] text-white shadow-xs" : "text-[#617285] hover:text-[#14283F]"
             )}
           >
             <Bike className="size-3.5" /> Courier Rider
           </button>
         </div>
 
-        <h1 className="mt-6 text-2xl font-bold">
+        <h1 className="mt-6 font-display text-2xl font-extrabold text-[#14283F]">
           {mode === "in"
-            ? "Welcome back"
+            ? (role === "rider" ? "Rider Sign In" : "Customer Sign In")
             : role === "rider"
               ? "Join as a Courier Rider"
               : "Create Customer Account"}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-[#617285]">
           {role === "rider"
             ? "Deliver parcels across Karachi and earn on every drop."
             : "Book same-city deliveries and track parcels in real time."}
         </p>
 
-        <Button variant="glass" className="mt-6 w-full" onClick={google} type="button">
+        <Button variant="outline" className="mt-6 w-full border-[#E5EAE7] bg-white hover:bg-[#F8F9F6] text-[#14283F] font-semibold" onClick={google} type="button">
           Continue with Google
         </Button>
 

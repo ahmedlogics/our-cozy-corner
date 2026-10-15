@@ -704,7 +704,7 @@ function Book() {
                 <div className="mt-3.5 space-y-2">
                   <AddressSearchBox
                     id="pickup-address"
-                    label="1. Pickup Address"
+                    label="From where? (Pickup Location)"
                     value={pickupAddr}
                     onChange={setPickupAddr}
                     point={pickup}
@@ -737,7 +737,7 @@ function Book() {
 
                   <AddressSearchBox
                     id="dropoff-address"
-                    label="2. Drop-off Destination"
+                    label="Where to? (Destination Address)"
                     value={dropAddr}
                     onChange={setDropAddr}
                     point={dropoff}

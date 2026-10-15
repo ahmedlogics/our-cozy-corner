@@ -12,7 +12,7 @@ import { useOrdersRealtime } from "@/features/orders/realtime";
 import { riderJobsQuery } from "@/features/rider/rider";
 import { ACTIVE_STATUSES, formatPKR, type Order } from "@/features/orders/orders";
 
-export const Route = createFileRoute("/_authenticated/rider/jobs")({
+export const Route = createFileRoute("/_authenticated/rider/jobs/")({
   head: () => ({
     meta: [
       { title: "My jobs — LogiPulse rider" },

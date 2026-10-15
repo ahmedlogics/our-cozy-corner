@@ -76,20 +76,32 @@ function Overview() {
   ];
   return (
     <DashboardShell role="Customer" title="Overview" items={customerNav("overview")}>
-      <section className="animate-enter flex flex-col gap-4 rounded-3xl border border-border bg-gradient-surface p-6 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+      <section className="animate-enter flex flex-col gap-4 rounded-3xl border border-[#E5EAE7] bg-white p-6 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">Assalam-o-Alaikum,</p>
-          <h2 className="text-2xl font-bold">{profile.full_name}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Send a parcel anywhere within Karachi.</p>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#087F75]">Customer Portal</span>
+          <h2 className="mt-1 font-display text-2xl font-extrabold text-[#14283F]">Welcome back, {profile.full_name}</h2>
+          <p className="mt-1 text-sm text-[#617285]">Book, dispatch, and track connected deliveries across the city.</p>
         </div>
-        <Button asChild variant="hero" size="lg"><Link to="/customer/book"><PackagePlus /> New delivery</Link></Button>
+        <Button asChild variant="hero" size="lg" className="shadow-md">
+          <Link to="/customer/book">
+            <PackagePlus className="size-4 mr-1.5" />
+            <span>Book New Delivery</span>
+          </Link>
+        </Button>
       </section>
+
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((s, i) => (
-          <div key={s.label} className="animate-enter rounded-2xl border border-border bg-card p-5 shadow-soft transition-colors hover:border-primary/40" style={{ animationDelay: `${(i + 1) * 70}ms` }}>
-            <s.icon className="size-5 text-primary" />
-            <p className="mt-3 text-3xl font-bold tabular-nums">{s.value}</p>
-            <p className="text-sm text-muted-foreground">{s.label}</p>
+          <div
+            key={s.label}
+            className="animate-enter rounded-2xl border border-[#E5EAE7] bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:border-[#087F75]/40"
+            style={{ animationDelay: `${(i + 1) * 70}ms` }}
+          >
+            <div className="grid size-10 place-items-center rounded-xl bg-[#E9F3EF] text-[#087F75]">
+              <s.icon className="size-5" />
+            </div>
+            <p className="mt-4 font-display text-3xl font-extrabold text-[#14283F] tabular-nums">{s.value}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#617285]">{s.label}</p>
           </div>
         ))}
       </div>

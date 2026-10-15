@@ -41,10 +41,103 @@ export async function isAdmin() {
   return data === true;
 }
 
-export const adminStatsQuery = queryOptions({ queryKey: ["admin", "stats"], queryFn: () => rpc<AdminStats>(supabase.rpc("admin_stats")), refetchInterval: 30000 });
+export const adminStatsQuery = queryOptions({
+  queryKey: ["admin", "stats"],
+  queryFn: async (): Promise<AdminStats> => {
+    const stats = await rpc<AdminStats>(supabase.rpc("admin_stats"));
+    if (stats && stats.total_customers === 0) {
+      try {
+        const [profilesRes, ridersRes, adminRolesRes] = await Promise.all([
+          supabase.from("profiles").select("id"),
+          supabase.from("rider_profiles").select("user_id"),
+          supabase.from("user_roles").select("user_id").eq("role", "admin"),
+        ]);
+        if (profilesRes.data) {
+          const riderIds = new Set((ridersRes.data ?? []).map((r) => r.user_id));
+          const adminIds = new Set((adminRolesRes.data ?? []).map((a) => a.user_id));
+          const count = profilesRes.data.filter((p) => !adminIds.has(p.id) && !riderIds.has(p.id)).length;
+          if (count > 0) {
+            stats.total_customers = count;
+          }
+        }
+      } catch {
+        // keep stats as is
+      }
+    }
+    return stats;
+  },
+  refetchInterval: 30000,
+});
+
 export const adminOrdersQuery = queryOptions({ queryKey: ["admin", "orders"], queryFn: () => rpc<AdminOrder[]>(supabase.rpc("admin_list_orders")), refetchInterval: 30000 });
 export const adminRidersQuery = queryOptions({ queryKey: ["admin", "riders"], queryFn: () => rpc<AdminRider[]>(supabase.rpc("admin_list_riders")), refetchInterval: 30000 });
-export const adminCustomersQuery = queryOptions({ queryKey: ["admin", "customers"], queryFn: () => rpc<AdminCustomer[]>(supabase.rpc("admin_list_customers")) });
+
+export const adminCustomersQuery = queryOptions({
+  queryKey: ["admin", "customers"],
+  queryFn: async (): Promise<AdminCustomer[]> => {
+    // 1. Try authoritative RPC first
+    try {
+      const { data, error } = await supabase.rpc("admin_list_customers");
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return data as AdminCustomer[];
+      }
+    } catch {
+      // Continue to fallback
+    }
+
+    // 2. Direct profiles fallback:
+    // If admin_list_customers RPC returned [] (e.g. because user_roles table
+    // lacks explicit 'customer' rows for accounts created before or without the trigger),
+    // query public.profiles directly since admins have SELECT access.
+    try {
+      const [profilesRes, ridersRes, adminRolesRes, ordersRes] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, phone, is_active, created_at").order("created_at", { ascending: false }),
+        supabase.from("rider_profiles").select("user_id"),
+        supabase.from("user_roles").select("user_id").eq("role", "admin"),
+        supabase.from("orders").select("id, customer_id, created_at"),
+      ]);
+
+      if (profilesRes.data && profilesRes.data.length > 0) {
+        const riderIds = new Set((ridersRes.data ?? []).map((r) => r.user_id));
+        const adminIds = new Set((adminRolesRes.data ?? []).map((a) => a.user_id));
+        const orders = ordersRes.data ?? [];
+
+        // All users who are not admins and not in rider_profiles are customers
+        const customers: AdminCustomer[] = profilesRes.data
+          .filter((p) => !adminIds.has(p.id) && !riderIds.has(p.id))
+          .map((p) => {
+            const userOrders = orders.filter((o) => o.customer_id === p.id);
+            const sortedDates = userOrders
+              .map((o) => o.created_at)
+              .filter(Boolean)
+              .sort()
+              .reverse();
+
+            return {
+              user_id: p.id,
+              full_name: p.full_name || "Customer",
+              phone: p.phone ?? null,
+              account_active: p.is_active ?? true,
+              order_count: userOrders.length,
+              last_order_at: sortedDates[0] ?? null,
+            };
+          });
+
+        if (customers.length > 0) {
+          return customers;
+        }
+      }
+    } catch (e) {
+      console.warn("Direct customer query fallback error:", e);
+    }
+
+    // 3. Fallback to RPC result if table query didn't return any
+    const { data, error } = await supabase.rpc("admin_list_customers");
+    if (error) throw new Error(friendlyError(error));
+    return (data as AdminCustomer[]) ?? [];
+  },
+  refetchInterval: 15000,
+});
 
 export const setOrderPriority = (id: string, p: Priority) => rpc<Priority>(supabase.rpc("update_order_priority", { p_order_id: id, p_priority: p }));
 export const setAccountActive = (id: string, active: boolean) => rpc<void>(supabase.rpc("admin_set_account_active", { p_user_id: id, p_active: active }));

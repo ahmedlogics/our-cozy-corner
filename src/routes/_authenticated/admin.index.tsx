@@ -89,99 +89,99 @@ function PricingRulesEditor() {
     >
       <div className="grid gap-6 md:grid-cols-2 pt-2">
         {/* Bike Pricing */}
-        <div className="rounded-xl border border-[#D9C5B2] bg-[#FAF6F0] p-4 space-y-3">
+        <div className="rounded-xl border border-[#E5EAE7] bg-[#F8F9F6] p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="grid size-8 place-items-center rounded-lg bg-[#B4532A] text-[#FAF6F0]">
+            <div className="grid size-8 place-items-center rounded-lg bg-[#087F75] text-white">
               <Bike className="size-4" />
             </div>
             <div>
-              <p className="font-semibold text-sm text-[#2B211B]">Motorbike Delivery</p>
-              <p className="text-[11px] text-[#7C6F64]">Small parcels, documents, express courier</p>
+              <p className="font-semibold text-sm text-[#14283F]">Motorbike Delivery</p>
+              <p className="text-[11px] text-[#617285]">Small parcels, documents, express courier</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 pt-1">
             <div className="space-y-1">
-              <Label htmlFor="bike-base" className="text-[11px] font-semibold text-[#2B211B]">Base Fare (Rs)</Label>
+              <Label htmlFor="bike-base" className="text-[11px] font-semibold text-[#14283F]">Base Fare (Rs)</Label>
               <Input
                 id="bike-base"
                 type="number"
                 value={bikeBase}
                 onChange={(e) => setBikeBase(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="bg-white text-xs h-8 border-[#E5EAE7]"
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="bike-km" className="text-[11px] font-semibold text-[#2B211B]">Rate/KM (Rs)</Label>
+              <Label htmlFor="bike-km" className="text-[11px] font-semibold text-[#14283F]">Rate/KM (Rs)</Label>
               <Input
                 id="bike-km"
                 type="number"
                 value={bikePerKm}
                 onChange={(e) => setBikePerKm(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="bg-white text-xs h-8 border-[#E5EAE7]"
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="bike-care" className="text-[11px] font-semibold text-[#2B211B]">Care Fee (Rs)</Label>
+              <Label htmlFor="bike-care" className="text-[11px] font-semibold text-[#14283F]">Care Fee (Rs)</Label>
               <Input
                 id="bike-care"
                 type="number"
                 value={bikeCare}
                 onChange={(e) => setBikeCare(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="bg-white text-xs h-8 border-[#E5EAE7]"
               />
             </div>
           </div>
         </div>
 
         {/* Cargo Pricing */}
-        <div className="rounded-xl border border-[#D9C5B2] bg-[#FAF6F0] p-4 space-y-3">
+        <div className="rounded-xl border border-[#E5EAE7] bg-[#F8F9F6] p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="grid size-8 place-items-center rounded-lg bg-[#2B211B] text-[#FAF6F0]">
+            <div className="grid size-8 place-items-center rounded-lg bg-[#14283F] text-white">
               <Truck className="size-4" />
             </div>
             <div>
-              <p className="font-semibold text-sm text-[#2B211B]">Cargo Delivery</p>
-              <p className="text-[11px] text-[#7C6F64]">Heavy boxes, appliances, loader available (Rs. 100)</p>
+              <p className="font-semibold text-sm text-[#14283F]">Cargo Delivery</p>
+              <p className="text-[11px] text-[#617285]">Heavy boxes, appliances, loader available (Rs. 100)</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 pt-1">
             <div className="space-y-1">
-              <Label htmlFor="cargo-base" className="text-[11px] font-semibold text-[#2B211B]">Base Fare (Rs)</Label>
+              <Label htmlFor="cargo-base" className="text-[11px] font-semibold text-[#14283F]">Base Fare (Rs)</Label>
               <Input
                 id="cargo-base"
                 type="number"
                 value={cargoBase}
                 onChange={(e) => setCargoBase(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="bg-white text-xs h-8 border-[#E5EAE7]"
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="cargo-km" className="text-[11px] font-semibold text-[#2B211B]">Rate/KM (Rs)</Label>
+              <Label htmlFor="cargo-km" className="text-[11px] font-semibold text-[#14283F]">Rate/KM (Rs)</Label>
               <Input
                 id="cargo-km"
                 type="number"
                 value={cargoPerKm}
                 onChange={(e) => setCargoPerKm(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="bg-white text-xs h-8 border-[#E5EAE7]"
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="cargo-care" className="text-[11px] font-semibold text-[#2B211B]">Care Fee (Rs)</Label>
+              <Label htmlFor="cargo-care" className="text-[11px] font-semibold text-[#14283F]">Care Fee (Rs)</Label>
               <Input
                 id="cargo-care"
                 type="number"
                 value={cargoCare}
                 onChange={(e) => setCargoCare(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="bg-white text-xs h-8 border-[#E5EAE7]"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-[#D9C5B2]/60 pt-3">
-        <p className="text-xs text-[#7C6F64]">
-          Updates will be stored in Supabase <code className="font-mono text-[#2B211B]">pricing_rules</code> table and take effect immediately.
+      <div className="mt-4 flex items-center justify-between border-t border-[#E5EAE7] pt-3">
+        <p className="text-xs text-[#617285]">
+          Updates will be stored in Supabase <code className="font-mono text-[#14283F]">pricing_rules</code> table and take effect immediately.
         </p>
         <Button size="sm" variant="hero" onClick={handleSave} disabled={saving} className="text-xs">
           <Save className="size-3.5 mr-1.5" />

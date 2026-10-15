@@ -21,9 +21,9 @@ import { Route as AuthenticatedAdminRidersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedCustomerBookRouteImport } from './routes/_authenticated/customer.book'
 import { Route as AuthenticatedRiderIndexRouteImport } from './routes/_authenticated/rider.index'
-import { Route as AuthenticatedRiderJobsRouteImport } from './routes/_authenticated/rider.jobs'
 import { Route as AuthenticatedCustomerOrdersIndexRouteImport } from './routes/_authenticated/customer.orders.index'
 import { Route as AuthenticatedCustomerOrdersOrderIdRouteImport } from './routes/_authenticated/customer.orders.$orderId'
+import { Route as AuthenticatedRiderJobsIndexRouteImport } from './routes/_authenticated/rider.jobs.index'
 import { Route as AuthenticatedRiderJobsOrderIdRouteImport } from './routes/_authenticated/rider.jobs.$orderId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -91,11 +91,6 @@ const AuthenticatedRiderIndexRoute = AuthenticatedRiderIndexRouteImport.update({
   path: '/rider/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedRiderJobsRoute = AuthenticatedRiderJobsRouteImport.update({
-  id: '/rider/jobs',
-  path: '/rider/jobs',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedCustomerOrdersIndexRoute =
   AuthenticatedCustomerOrdersIndexRouteImport.update({
     id: '/customer/orders/',
@@ -108,11 +103,17 @@ const AuthenticatedCustomerOrdersOrderIdRoute =
     path: '/customer/orders/$orderId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRiderJobsIndexRoute =
+  AuthenticatedRiderJobsIndexRouteImport.update({
+    id: '/rider/jobs/',
+    path: '/rider/jobs/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRiderJobsOrderIdRoute =
   AuthenticatedRiderJobsOrderIdRouteImport.update({
-    id: '/$orderId',
-    path: '/$orderId',
-    getParentRoute: () => AuthenticatedRiderJobsRoute,
+    id: '/rider/jobs/$orderId',
+    path: '/rider/jobs/$orderId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -124,13 +125,13 @@ export interface FileRoutesByFullPath {
   '/admin/priority': typeof AuthenticatedAdminPriorityRoute
   '/admin/riders': typeof AuthenticatedAdminRidersRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
-  '/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/customer/': typeof AuthenticatedCustomerIndexRoute
   '/rider/': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/rider/jobs/$orderId': typeof AuthenticatedRiderJobsOrderIdRoute
   '/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
+  '/rider/jobs/': typeof AuthenticatedRiderJobsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,13 +141,13 @@ export interface FileRoutesByTo {
   '/admin/priority': typeof AuthenticatedAdminPriorityRoute
   '/admin/riders': typeof AuthenticatedAdminRidersRoute
   '/customer/book': typeof AuthenticatedCustomerBookRoute
-  '/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/customer': typeof AuthenticatedCustomerIndexRoute
   '/rider': typeof AuthenticatedRiderIndexRoute
   '/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/rider/jobs/$orderId': typeof AuthenticatedRiderJobsOrderIdRoute
   '/customer/orders': typeof AuthenticatedCustomerOrdersIndexRoute
+  '/rider/jobs': typeof AuthenticatedRiderJobsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,13 +160,13 @@ export interface FileRoutesById {
   '/_authenticated/admin/priority': typeof AuthenticatedAdminPriorityRoute
   '/_authenticated/admin/riders': typeof AuthenticatedAdminRidersRoute
   '/_authenticated/customer/book': typeof AuthenticatedCustomerBookRoute
-  '/_authenticated/rider/jobs': typeof AuthenticatedRiderJobsRouteWithChildren
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/customer/': typeof AuthenticatedCustomerIndexRoute
   '/_authenticated/rider/': typeof AuthenticatedRiderIndexRoute
   '/_authenticated/customer/orders/$orderId': typeof AuthenticatedCustomerOrdersOrderIdRoute
   '/_authenticated/rider/jobs/$orderId': typeof AuthenticatedRiderJobsOrderIdRoute
   '/_authenticated/customer/orders/': typeof AuthenticatedCustomerOrdersIndexRoute
+  '/_authenticated/rider/jobs/': typeof AuthenticatedRiderJobsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -178,13 +179,13 @@ export interface FileRouteTypes {
     | '/admin/priority'
     | '/admin/riders'
     | '/customer/book'
-    | '/rider/jobs'
     | '/admin/'
     | '/customer/'
     | '/rider/'
     | '/customer/orders/$orderId'
     | '/rider/jobs/$orderId'
     | '/customer/orders/'
+    | '/rider/jobs/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,13 +195,13 @@ export interface FileRouteTypes {
     | '/admin/priority'
     | '/admin/riders'
     | '/customer/book'
-    | '/rider/jobs'
     | '/admin'
     | '/customer'
     | '/rider'
     | '/customer/orders/$orderId'
     | '/rider/jobs/$orderId'
     | '/customer/orders'
+    | '/rider/jobs'
   id:
     | '__root__'
     | '/'
@@ -212,13 +213,13 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/priority'
     | '/_authenticated/admin/riders'
     | '/_authenticated/customer/book'
-    | '/_authenticated/rider/jobs'
     | '/_authenticated/admin/'
     | '/_authenticated/customer/'
     | '/_authenticated/rider/'
     | '/_authenticated/customer/orders/$orderId'
     | '/_authenticated/rider/jobs/$orderId'
     | '/_authenticated/customer/orders/'
+    | '/_authenticated/rider/jobs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -313,13 +314,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRiderIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/rider/jobs': {
-      id: '/_authenticated/rider/jobs'
-      path: '/rider/jobs'
-      fullPath: '/rider/jobs'
-      preLoaderRoute: typeof AuthenticatedRiderJobsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/customer/orders/': {
       id: '/_authenticated/customer/orders/'
       path: '/customer/orders'
@@ -334,12 +328,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomerOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rider/jobs/': {
+      id: '/_authenticated/rider/jobs/'
+      path: '/rider/jobs'
+      fullPath: '/rider/jobs/'
+      preLoaderRoute: typeof AuthenticatedRiderJobsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/rider/jobs/$orderId': {
       id: '/_authenticated/rider/jobs/$orderId'
-      path: '/$orderId'
+      path: '/rider/jobs/$orderId'
       fullPath: '/rider/jobs/$orderId'
       preLoaderRoute: typeof AuthenticatedRiderJobsOrderIdRouteImport
-      parentRoute: typeof AuthenticatedRiderJobsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -363,39 +364,27 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
-interface AuthenticatedRiderJobsRouteChildren {
-  AuthenticatedRiderJobsOrderIdRoute: typeof AuthenticatedRiderJobsOrderIdRoute
-}
-
-const AuthenticatedRiderJobsRouteChildren: AuthenticatedRiderJobsRouteChildren =
-  {
-    AuthenticatedRiderJobsOrderIdRoute: AuthenticatedRiderJobsOrderIdRoute,
-  }
-
-const AuthenticatedRiderJobsRouteWithChildren =
-  AuthenticatedRiderJobsRoute._addFileChildren(
-    AuthenticatedRiderJobsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCustomerBookRoute: typeof AuthenticatedCustomerBookRoute
-  AuthenticatedRiderJobsRoute: typeof AuthenticatedRiderJobsRouteWithChildren
   AuthenticatedCustomerIndexRoute: typeof AuthenticatedCustomerIndexRoute
   AuthenticatedRiderIndexRoute: typeof AuthenticatedRiderIndexRoute
   AuthenticatedCustomerOrdersOrderIdRoute: typeof AuthenticatedCustomerOrdersOrderIdRoute
+  AuthenticatedRiderJobsOrderIdRoute: typeof AuthenticatedRiderJobsOrderIdRoute
   AuthenticatedCustomerOrdersIndexRoute: typeof AuthenticatedCustomerOrdersIndexRoute
+  AuthenticatedRiderJobsIndexRoute: typeof AuthenticatedRiderJobsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCustomerBookRoute: AuthenticatedCustomerBookRoute,
-  AuthenticatedRiderJobsRoute: AuthenticatedRiderJobsRouteWithChildren,
   AuthenticatedCustomerIndexRoute: AuthenticatedCustomerIndexRoute,
   AuthenticatedRiderIndexRoute: AuthenticatedRiderIndexRoute,
   AuthenticatedCustomerOrdersOrderIdRoute:
     AuthenticatedCustomerOrdersOrderIdRoute,
+  AuthenticatedRiderJobsOrderIdRoute: AuthenticatedRiderJobsOrderIdRoute,
   AuthenticatedCustomerOrdersIndexRoute: AuthenticatedCustomerOrdersIndexRoute,
+  AuthenticatedRiderJobsIndexRoute: AuthenticatedRiderJobsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

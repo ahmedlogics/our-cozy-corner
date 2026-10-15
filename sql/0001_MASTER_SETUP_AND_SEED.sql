@@ -639,7 +639,19 @@ BEGIN
     'active', (SELECT count(*) FROM public.orders WHERE status IN ('ACCEPTED', 'PICKED_UP', 'IN_TRANSIT')),
     'delivered', (SELECT count(*) FROM public.orders WHERE status = 'DELIVERED'),
     'cancelled', (SELECT count(*) FROM public.orders WHERE status = 'CANCELLED'),
-    'total_customers', (SELECT count(*) FROM public.user_roles WHERE role = 'customer'),
+    'total_customers', (
+      SELECT count(*) FROM public.profiles p
+      WHERE (
+        EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role = 'customer')
+        OR EXISTS (SELECT 1 FROM public.orders o WHERE o.customer_id = p.id)
+        OR (
+          NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role = 'admin')
+          AND NOT EXISTS (SELECT 1 FROM public.rider_profiles rp WHERE rp.user_id = p.id)
+        )
+      )
+      AND NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role = 'admin')
+      AND NOT EXISTS (SELECT 1 FROM public.rider_profiles rp WHERE rp.user_id = p.id)
+    ),
     'total_riders', (SELECT count(*) FROM public.rider_profiles),
     'active_riders', (SELECT count(*) FROM public.rider_profiles rp JOIN public.profiles p ON p.id = rp.user_id WHERE rp.is_active AND p.is_active),
     'open_normal', (SELECT count(*) FROM public.orders WHERE priority = 'NORMAL' AND status NOT IN ('DELIVERED', 'CANCELLED')),
@@ -687,8 +699,17 @@ BEGIN
   PERFORM public.require_admin();
   RETURN QUERY SELECT p.id, COALESCE(NULLIF(p.full_name, ''), 'Customer'), p.phone, p.is_active,
     (SELECT count(*) FROM public.orders o WHERE o.customer_id = p.id), (SELECT max(o.created_at) FROM public.orders o WHERE o.customer_id = p.id)
-  FROM public.profiles p WHERE EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role = 'customer')
-    AND NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role IN ('admin', 'rider'))
+  FROM public.profiles p
+  WHERE (
+    EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role = 'customer')
+    OR EXISTS (SELECT 1 FROM public.orders o WHERE o.customer_id = p.id)
+    OR (
+      NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role = 'admin')
+      AND NOT EXISTS (SELECT 1 FROM public.rider_profiles rp WHERE rp.user_id = p.id)
+    )
+  )
+  AND NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id AND ur.role = 'admin')
+  AND NOT EXISTS (SELECT 1 FROM public.rider_profiles rp WHERE rp.user_id = p.id)
   ORDER BY p.created_at DESC;
 END $$;
 
@@ -871,6 +892,14 @@ INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'admin'::public.app_role
 FROM auth.users
 WHERE lower(email) IN ('m.ahmedraza1527@gmail.com', 'ahmed.studies15@gmail.com')
+ON CONFLICT (user_id, role) DO NOTHING;
+
+-- Backfill 'customer' role for any profile that is not an admin and not a rider:
+INSERT INTO public.user_roles (user_id, role)
+SELECT p.id, 'customer'::public.app_role
+FROM public.profiles p
+WHERE NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = p.id)
+  AND NOT EXISTS (SELECT 1 FROM public.rider_profiles rp WHERE rp.user_id = p.id)
 ON CONFLICT (user_id, role) DO NOTHING;
 
 -- ----------------------------------------------------------------------------

@@ -11,6 +11,7 @@ import { customerNav } from "@/features/customer/nav";
 import { orderQuery, orderRiderQuery, profileQuery } from "@/features/orders/orders";
 import { useOrdersRealtime } from "@/features/orders/realtime";
 import { DispatchRadar } from "@/components/shared/DispatchRadar";
+import { DeliveryRouteMap } from "@/components/shared/DeliveryRouteMap";
 
 function OrderDetailErrorComponent({ error }: { error: unknown }) {
   const router = useRouter();
@@ -90,7 +91,16 @@ function OrderDetail() {
           <DashCard title="Chat with your rider">
             <ChatPanel orderId={o.id} status={o.status} riderId={o.rider_id} meId={me.data?.id ?? ""} otherName={rider.data?.full_name ?? "Your rider"} />
           </DashCard>
-          <DashCard title="Route">
+          <DashCard title="Route & Navigation">
+            {o.pickup_lat && o.pickup_lng && o.dropoff_lat && o.dropoff_lng && (
+              <div className="mb-4">
+                <DeliveryRouteMap
+                  pickup={{ lat: Number(o.pickup_lat), lng: Number(o.pickup_lng), address: o.pickup_address }}
+                  dropoff={{ lat: Number(o.dropoff_lat), lng: Number(o.dropoff_lng), address: o.dropoff_address }}
+                  status={o.status}
+                />
+              </div>
+            )}
             <div className="space-y-4 text-sm">
               <div className="flex gap-3"><MapPin className="mt-0.5 size-4 text-primary" /><div><p className="font-medium">Pickup</p><p>{o.pickup_address}</p></div></div>
               <div className="flex gap-3"><MapPin className="mt-0.5 size-4 text-accent" /><div><p className="font-medium">Drop-off</p><p>{o.dropoff_address}</p></div></div>

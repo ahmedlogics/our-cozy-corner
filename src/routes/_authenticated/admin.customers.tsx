@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { adminCustomersQuery, adminNav, adminOrdersQuery, orderRef, type AdminCustomer } from "@/features/admin/admin";
 import { formatPKR } from "@/features/orders/orders";
+import { useOrdersRealtime } from "@/features/orders/realtime";
 
 export const Route = createFileRoute("/_authenticated/admin/customers")({
   head: () => ({
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/admin/customers")({
 });
 
 function Customers() {
+  useOrdersRealtime([["admin", "customers"], ["admin"]]);
   const q = useQuery(adminCustomersQuery);
   const [open, setOpen] = useState<AdminCustomer | null>(null);
   return (

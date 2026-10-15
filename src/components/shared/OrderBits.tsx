@@ -5,22 +5,29 @@ import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { STATUS_FLOW, STATUS_LABEL, formatPKR, progressOf, type Order, type OrderEvent, type OrderStatus } from "@/features/orders/orders";
 
 const statusStyle: Record<OrderStatus, string> = {
-  PENDING: "bg-warning/15 text-warning",
-  ACCEPTED: "bg-primary/15 text-primary",
-  PICKED_UP: "bg-primary/15 text-primary",
-  IN_TRANSIT: "bg-primary/15 text-primary",
-  DELIVERED: "bg-success/15 text-success",
-  CANCELLED: "bg-destructive/15 text-destructive",
+  PENDING: "bg-amber-50 text-amber-700 border border-amber-200",
+  ACCEPTED: "bg-blue-50 text-blue-700 border border-blue-200",
+  PICKED_UP: "bg-teal-50 text-[#087F75] border border-teal-200 font-semibold",
+  IN_TRANSIT: "bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold",
+  DELIVERED: "bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold",
+  CANCELLED: "bg-rose-50 text-rose-700 border border-rose-200",
 };
 
 export function StatusBadge({ status }: { status: OrderStatus }) {
-  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold", statusStyle[status])}>{STATUS_LABEL[status]}</span>;
+  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs", statusStyle[status])}>{STATUS_LABEL[status]}</span>;
 }
 
 export function ProgressBar({ status }: { status: OrderStatus }) {
+  const isComplete = status === "DELIVERED";
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuenow={progressOf(status)} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${progressOf(status)}%` }} />
+    <div className="h-2 w-full overflow-hidden rounded-full bg-[#E5EAE7]" role="progressbar" aria-valuenow={progressOf(status)} aria-valuemin={0} aria-valuemax={100}>
+      <div
+        className={cn(
+          "h-full rounded-full transition-[width] duration-700",
+          isComplete ? "bg-[#16A34A]" : "bg-[#087F75]"
+        )}
+        style={{ width: `${progressOf(status)}%` }}
+      />
     </div>
   );
 }
