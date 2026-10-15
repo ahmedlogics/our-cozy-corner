@@ -45,24 +45,31 @@ export const adminStatsQuery = queryOptions({
   queryKey: ["admin", "stats"],
   queryFn: async (): Promise<AdminStats> => {
     const stats = await rpc<AdminStats>(supabase.rpc("admin_stats"));
-    if (stats && stats.total_customers === 0) {
-      try {
-        const [profilesRes, ridersRes, adminRolesRes] = await Promise.all([
-          supabase.from("profiles").select("id"),
-          supabase.from("rider_profiles").select("user_id"),
-          supabase.from("user_roles").select("user_id").eq("role", "admin"),
-        ]);
-        if (profilesRes.data) {
-          const riderIds = new Set((ridersRes.data ?? []).map((r) => r.user_id));
-          const adminIds = new Set((adminRolesRes.data ?? []).map((a) => a.user_id));
-          const count = profilesRes.data.filter((p) => !adminIds.has(p.id) && !riderIds.has(p.id)).length;
-          if (count > 0) {
-            stats.total_customers = count;
-          }
+    try {
+      const [profilesRes, ridersRes, rolesRes, ordersRes] = await Promise.all([
+        supabase.from("profiles").select("id"),
+        supabase.from("rider_profiles").select("user_id"),
+        supabase.from("user_roles").select("user_id, role"),
+        supabase.from("orders").select("customer_id"),
+      ]);
+      if (profilesRes.data) {
+        const riderIds = new Set((ridersRes.data ?? []).map((r) => r.user_id));
+        const adminIds = new Set((rolesRes.data ?? []).filter((r) => r.role === "admin").map((a) => a.user_id));
+        const customerRoleIds = new Set((rolesRes.data ?? []).filter((r) => r.role === "customer").map((c) => c.user_id));
+        const orderingCustomerIds = new Set((ordersRes.data ?? []).map((o) => o.customer_id).filter(Boolean));
+
+        const count = profilesRes.data.filter((p) =>
+          customerRoleIds.has(p.id) ||
+          orderingCustomerIds.has(p.id) ||
+          (!adminIds.has(p.id) && !riderIds.has(p.id))
+        ).length;
+
+        if (count > 0) {
+          stats.total_customers = Math.max(stats.total_customers ?? 0, count);
         }
-      } catch {
-        // keep stats as is
       }
+    } catch {
+      // keep stats as is
     }
     return stats;
   },
@@ -76,36 +83,45 @@ export const adminCustomersQuery = queryOptions({
   queryKey: ["admin", "customers"],
   queryFn: async (): Promise<AdminCustomer[]> => {
     // 1. Try authoritative RPC first
+    let rpcCustomers: AdminCustomer[] = [];
     try {
       const { data, error } = await supabase.rpc("admin_list_customers");
-      if (!error && Array.isArray(data) && data.length > 0) {
-        return data as AdminCustomer[];
+      if (!error && Array.isArray(data)) {
+        rpcCustomers = data as AdminCustomer[];
       }
     } catch {
       // Continue to fallback
     }
 
-    // 2. Direct profiles fallback:
-    // If admin_list_customers RPC returned [] (e.g. because user_roles table
-    // lacks explicit 'customer' rows for accounts created before or without the trigger),
-    // query public.profiles directly since admins have SELECT access.
+    // 2. Fetch direct profiles, orders, and roles to ensure ANY account with orders
+    // or standard customer role is included (e.g. if an admin/tester placed orders or RPC skipped them)
     try {
-      const [profilesRes, ridersRes, adminRolesRes, ordersRes] = await Promise.all([
+      const [profilesRes, ridersRes, rolesRes, ordersRes] = await Promise.all([
         supabase.from("profiles").select("id, full_name, phone, is_active, created_at").order("created_at", { ascending: false }),
         supabase.from("rider_profiles").select("user_id"),
-        supabase.from("user_roles").select("user_id").eq("role", "admin"),
+        supabase.from("user_roles").select("user_id, role"),
         supabase.from("orders").select("id, customer_id, created_at"),
       ]);
 
       if (profilesRes.data && profilesRes.data.length > 0) {
         const riderIds = new Set((ridersRes.data ?? []).map((r) => r.user_id));
-        const adminIds = new Set((adminRolesRes.data ?? []).map((a) => a.user_id));
+        const adminIds = new Set((rolesRes.data ?? []).filter((r) => r.role === "admin").map((a) => a.user_id));
+        const customerRoleIds = new Set((rolesRes.data ?? []).filter((r) => r.role === "customer").map((c) => c.user_id));
         const orders = ordersRes.data ?? [];
+        const orderingCustomerIds = new Set(orders.map((o) => o.customer_id).filter(Boolean));
 
-        // All users who are not admins and not in rider_profiles are customers
-        const customers: AdminCustomer[] = profilesRes.data
-          .filter((p) => !adminIds.has(p.id) && !riderIds.has(p.id))
-          .map((p) => {
+        // Accounts that should appear in the Customers list:
+        // - Explicit customer role
+        // - OR placed an order (e.g. testing)
+        // - OR general profile (not admin, not rider)
+        const eligibleProfiles = profilesRes.data.filter((p) =>
+          customerRoleIds.has(p.id) ||
+          orderingCustomerIds.has(p.id) ||
+          (!adminIds.has(p.id) && !riderIds.has(p.id))
+        );
+
+        if (eligibleProfiles.length > 0) {
+          const directCustomers: AdminCustomer[] = eligibleProfiles.map((p) => {
             const userOrders = orders.filter((o) => o.customer_id === p.id);
             const sortedDates = userOrders
               .map((o) => o.created_at)
@@ -113,9 +129,12 @@ export const adminCustomersQuery = queryOptions({
               .sort()
               .reverse();
 
+            const isStaffTesting = (adminIds.has(p.id) || riderIds.has(p.id)) && userOrders.length > 0;
+            const displayName = isStaffTesting ? `${p.full_name || "Account"} (Staff Test)` : (p.full_name || "Customer");
+
             return {
               user_id: p.id,
-              full_name: p.full_name || "Customer",
+              full_name: displayName,
               phone: p.phone ?? null,
               account_active: p.is_active ?? true,
               order_count: userOrders.length,
@@ -123,15 +142,26 @@ export const adminCustomersQuery = queryOptions({
             };
           });
 
-        if (customers.length > 0) {
-          return customers;
+          // Merge with RPC results if RPC returned some items, de-duplicating by user_id
+          const directMap = new Map(directCustomers.map((c) => [c.user_id, c]));
+          for (const rpcC of rpcCustomers) {
+            if (!directMap.has(rpcC.user_id)) {
+              directMap.set(rpcC.user_id, rpcC);
+            }
+          }
+
+          return Array.from(directMap.values());
         }
       }
     } catch (e) {
       console.warn("Direct customer query fallback error:", e);
     }
 
-    // 3. Fallback to RPC result if table query didn't return any
+    if (rpcCustomers.length > 0) {
+      return rpcCustomers;
+    }
+
+    // 3. Fallback to RPC call
     const { data, error } = await supabase.rpc("admin_list_customers");
     if (error) throw new Error(friendlyError(error));
     return (data as AdminCustomer[]) ?? [];
